@@ -1,0 +1,19 @@
+# Redis interval module
+
+# Commands
+
+IADD <key> <min> <max> member
+
+IREM <key> <member>
+
+ICONTAINS <key> <value>
+
+ICONTAINSINT <key> <min> <max>
+
+IOVERLAPSINT <key> <min> <max>
+
+IABUTSINT <key> <min> <max>
+
+IINTER <key> <key>
+
+IUNION <key> <key>
