@@ -12,11 +12,12 @@ typedef struct Interval {
     double upperBound;
     int includeLowerBound;
     int includeUpperBound;
-    double maxValueInSubTree;
 } Interval;
 
 typedef struct IntervalTreeNode {
     Interval* interval;
+    double maxUpperBound;
+    struct RedisModuleString *member;
     struct IntervalTreeNode *left;
     struct IntervalTreeNode *right;
 } IntervalTreeNode;

@@ -2,6 +2,8 @@
 #include "redis-commands.h"
 #include "struct.h"
 
+Interval *parseInterval(RedisModuleString *pString);
+
 int iAddCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     RedisModule_AutoMemory(ctx);
     if (argc != 4) {
@@ -18,14 +20,26 @@ int iAddCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
             intervalSet = createIntervalSet();
             RedisModule_ModuleTypeSetValue(key, IntervalSetType, intervalSet);
         }
-        Interval *interval = RedisModule_Alloc(sizeof (Interval));
-        interval->lowerBound = 1;
-        interval->includeLowerBound = 1;
-        interval->upperBound = 5;
-        interval->includeUpperBound = 1;
-        add(intervalSet, RedisModule_CreateString(ctx, "test", 4), interval);
-
+        Interval *interval = parseInterval(argv[2]);
+        add(intervalSet, argv[3], interval);
         return RedisModule_ReplyWithCString(ctx, "ok");
     }
+}
+
+Interval *parseInterval(RedisModuleString *intervalString) {
+    Interval *interval = RedisModule_Alloc(sizeof (Interval));
+    size_t len;
+    const char *str = RedisModule_StringPtrLen(intervalString, &len);
+    interval->includeLowerBound = 1;
+    if (str != NULL && len > 0 && str[0] == ']') {
+        interval->includeLowerBound = 0;
+    }
+    interval->includeUpperBound = 1;
+    if (str != NULL && len > 0 && str[len - 1] == '[') {
+        interval->includeUpperBound = 0;
+    }
+//    interval->lowerBound = 1;
+//    interval->upperBound = 5;
+    return interval;
 }
 
