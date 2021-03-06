@@ -1,19 +1,30 @@
-# Redis interval module
+= Redis interval module
 
-# Commands
+== Commands
 
-IADD <key> <min> <max> member
+Syntax of an interval : 
 
-IREM <key> <member>
+----
+double ::= "-"(0-9)*("." (0-9))?
+interval ::= ("[" | "]") (double | "-inf") "," (double | "+inf") ("[" | "]")
 
-ICONTAINS <key> <value>
+Examples : 
 
-ICONTAINSINT <key> <min> <max>
+[1,10] // between 1 included and 10 included
+[1,10[ // between 1 included and 10 excluded
+]1,10] // between 1 excluded and 10 included
+]1,10[ // between 1 excluded and 10 excluded
+[-inf,+inf] // between - infinity included and + infinity included
+----
 
-IOVERLAPSINT <key> <min> <max>
+IADD <key> [<interval> <member>]...
 
-IABUTSINT <key> <min> <max>
+IREM <key> [<member>]...
 
-IINTER <key> <key>
+ICONTAINS <key> <double>
 
-IUNION <key> <key>
+ICONTAINSINT <key> <interval>
+
+IOVERLAPSINT <key> <interval>
+
+IABUTSINT <key> <interval>
