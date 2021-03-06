@@ -2,17 +2,12 @@
 #define STRUCT_H
 
 #include "redismodule.h"
+#include "interval.h"
 
 typedef struct IntervalTree {
     struct IntervalTreeNode *head;
 } IntervalTree;
 
-typedef struct Interval {
-    double lowerBound;
-    double upperBound;
-    int includeLowerBound;
-    int includeUpperBound;
-} Interval;
 
 typedef struct IntervalTreeNode {
     Interval* interval;

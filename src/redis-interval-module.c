@@ -1,30 +1,6 @@
 #include "redismodule.h"
 #include "redis-commands.h"
-
-void *IntervalSetTypeRdbLoad(RedisModuleIO *rdb, int encver) {
-    return NULL;
-}
-
-void IntervalSetTypeRdbSave(RedisModuleIO *rdb, void *value) {
-
-}
-
-void IntervalSetTypeAofRewrite(RedisModuleIO *aof, RedisModuleString *key, void *value) {
-
-}
-
-size_t IntervalSetTypeMemUsage(const void *value) {
-    return 0;
-}
-
-void IntervalSetTypeFree(void *value) {
-
-}
-
-void IntervalSetTypeDigest(RedisModuleDigest *md, void *value) {
-
-}
-
+#include "io.h"
 
 int RedisModule_OnLoad(RedisModuleCtx *ctx) {
     if (RedisModule_Init(ctx, "interval", 1, REDISMODULE_APIVER_1) == REDISMODULE_ERR) {
