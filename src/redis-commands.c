@@ -19,12 +19,12 @@ int iAddCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
             intervalSet = createIntervalSet();
             RedisModule_ModuleTypeSetValue(key, IntervalSetType, intervalSet);
         }
-        Interval *interval = newInterval();
-        if (parseInterval(argv[2], interval) == INTERVAL_ERROR) {
+        Interval *interval = parseInterval(argv[2]);
+        if (interval == NULL) {
             return RedisModule_ReplyWithError(ctx, "incorrect interval");
         }
-        add(intervalSet, argv[3], interval);
-        return RedisModule_ReplyWithSimpleString(ctx, "OK");
+        int response = add(intervalSet, argv[3], interval);
+        return RedisModule_ReplyWithLongLong(ctx, response);
     }
 }
 

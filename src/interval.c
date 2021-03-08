@@ -2,11 +2,7 @@
 #include "stdlib.h"
 #include "interval.h"
 
-Interval *newInterval() {
-    return RedisModule_Alloc(sizeof (Interval));
-}
-
-int parseInterval(RedisModuleString *intervalString, Interval *interval) {
+Interval *parseInterval(RedisModuleString *intervalString) {
     size_t len;
     const char *str = RedisModule_StringPtrLen(intervalString, &len);
     char bounds[2][40] = {
@@ -18,13 +14,16 @@ int parseInterval(RedisModuleString *intervalString, Interval *interval) {
     int partIterator = 0;
     int missingBound[2] = { 1, 1 };
 
-    interval->includeLowerBound = 1;
-    interval->includeUpperBound = 1;
+    int includeLowerBound = 1;
+    int includeUpperBound = 1;
+    double lowerBound;
+    double upperBound;
+
     for (i = 0; i < len; i++){
         if (i == 0 && str[i] == ']') {
-            interval->includeLowerBound = 0;
+            includeLowerBound = 0;
         } else if (i == len - 1 && str[i] == '[') {
-            interval->includeUpperBound = 0;
+            includeUpperBound = 0;
         } else if (str[i] == ',') {
             partIndex = 1;
             partIterator = 0;
@@ -35,12 +34,17 @@ int parseInterval(RedisModuleString *intervalString, Interval *interval) {
         }
     }
     if (missingBound[0] || missingBound[1]) {
-        return INTERVAL_ERROR;
+        return NULL;
     }
-    interval->lowerBound = strtod(bounds[0], NULL);
-    interval->upperBound = strtod(bounds[1], NULL);
-    if (interval->lowerBound > interval->upperBound) {
-        return INTERVAL_ERROR;
+    lowerBound = strtod(bounds[0], NULL);
+    upperBound = strtod(bounds[1], NULL);
+    if (lowerBound > upperBound) {
+        return NULL;
     }
-    return INTERVAL_OK;
+    Interval *interval = RedisModule_Alloc(sizeof (Interval));
+    interval->includeLowerBound = includeLowerBound;
+    interval->includeUpperBound = includeUpperBound;
+    interval->lowerBound = lowerBound;
+    interval->upperBound = upperBound;
+    return interval;
 }

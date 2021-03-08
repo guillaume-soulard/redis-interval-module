@@ -1,10 +1,10 @@
 #include "struct.h"
 #include "float.h"
 
-void treeAdd(IntervalTree *tree, RedisModuleString *member, Interval *interval);
+void treeAdd(IntervalSet *intervalSet, IntervalTreeNode *node);
 IntervalTreeNode *createTreeNode(Interval *interval, RedisModuleString *member);
-double treeNodeAdd(IntervalTreeNode *node, RedisModuleString *member, Interval *interval);
-void hashAdd(HashTable *hash, RedisModuleString *member, Interval *interval);
+double treeNodeAdd(IntervalTreeNode *node, IntervalTreeNode *newNode);
+void hashAdd(IntervalSet *intervalSet, RedisModuleString *member, Interval *interval);
 
 IntervalSet *createIntervalSet() {
     IntervalSet *intervalSet = RedisModule_Alloc(sizeof(IntervalSet));
@@ -30,16 +30,15 @@ size_t getHashCode(int hashCapacity, RedisModuleString *key) {
 }
 
 int add(IntervalSet *intervalSet, RedisModuleString *member, Interval *interval) {
-    hashAdd(intervalSet->hash, member, interval);
-    treeAdd(intervalSet->tree, member, interval);
+    hashAdd(intervalSet, member, interval);
     return 1;
 }
 
-void treeAdd(IntervalTree *tree, RedisModuleString *member, Interval *interval) {
-    if (tree->head == NULL) {
-        tree->head = createTreeNode(interval, member);
+void treeAdd(IntervalSet *intervalSet, IntervalTreeNode *node) {
+    if (intervalSet->tree->head == NULL) {
+        intervalSet->tree->head = node;
     } else {
-        treeNodeAdd(tree->head, member, interval);
+        treeNodeAdd(intervalSet->tree->head, node);
     }
 }
 
@@ -47,42 +46,52 @@ IntervalTreeNode *createTreeNode(Interval *interval, RedisModuleString *member) 
     IntervalTreeNode *node = RedisModule_Alloc(sizeof (IntervalTreeNode));
     node->interval = interval;
     node->member = member;
+    node->left = NULL;
+    node->right = NULL;
     node->maxUpperBound = interval->upperBound;
     return node;
 }
 
-double treeNodeAdd(IntervalTreeNode *node, RedisModuleString *member, Interval *interval) {
+double treeNodeAdd(IntervalTreeNode *node, IntervalTreeNode *newNode) {
     double maxBound = DBL_MIN;
-    if (node->interval->lowerBound < interval->lowerBound) {
+    if (node->interval->lowerBound < newNode->interval->lowerBound) {
         if (node->left == NULL) {
-            node->left = createTreeNode(interval, member);
+            node->left = newNode;
             maxBound = node->left->maxUpperBound;
         } else {
-            maxBound = treeNodeAdd(node->left, member, interval);
+            maxBound = treeNodeAdd(node->left, newNode);
         }
     } else {
         if (node->right == NULL) {
-            node->right = createTreeNode(interval, member);
+            node->right = newNode;
             maxBound = node->right->maxUpperBound;
         } else {
-            maxBound = treeNodeAdd(node->right, member, interval);
+            maxBound = treeNodeAdd(node->right, newNode);
         }
     }
     if (node->maxUpperBound > maxBound) {
         maxBound = node->maxUpperBound;
+    } else {
+        node->maxUpperBound = maxBound;
     }
     return maxBound;
 }
 
-void hashAdd(HashTable *hash, RedisModuleString *member, Interval *interval) {
-    int hashCode = getHashCode(hash->primaryArrayCapacity, member);
-    if (hash->primaryArray[hashCode] == NULL) {
-        IntervalTreeNode *node = RedisModule_Alloc(sizeof(struct IntervalTreeNode));
+void hashAdd(IntervalSet *intervalSet, RedisModuleString *member, Interval *interval) {
+    int hashCode = getHashCode(intervalSet->hash->primaryArrayCapacity, member);
+    IntervalTreeNode *existingNode = intervalSet->hash->primaryArray[hashCode];
+    if (existingNode == NULL) {
+        IntervalTreeNode *node = createTreeNode(interval, member);
         node->interval = interval;
-        hash->primaryArray[hashCode] = node;
+        intervalSet->hash->primaryArray[hashCode] = node;
+        treeAdd(intervalSet, node);
     } else {
-        RedisModule_Free(hash->primaryArray[hashCode]->interval);
-        hash->primaryArray[hashCode]->interval = interval;
+        if (RedisModule_StringCompare(existingNode->member, member) == 0) {
+            RedisModule_Free(intervalSet->hash->primaryArray[hashCode]->interval);
+            intervalSet->hash->primaryArray[hashCode]->interval = interval;
+        } else {
+            // TODO redim hash
+        }
     }
 }
 

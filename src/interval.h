@@ -3,9 +3,6 @@
 
 #include "redismodule.h"
 
-#define INTERVAL_OK 0
-#define INTERVAL_ERROR 1
-
 typedef struct Interval {
     double lowerBound;
     double upperBound;
@@ -13,7 +10,6 @@ typedef struct Interval {
     int includeUpperBound;
 } Interval;
 
-Interval *newInterval();
-int parseInterval(RedisModuleString *intervalString, Interval *interval);
+Interval *parseInterval(RedisModuleString *intervalString);
 
 #endif
