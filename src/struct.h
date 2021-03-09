@@ -1,7 +1,6 @@
 #ifndef STRUCT_H
 #define STRUCT_H
 
-#include "redismodule.h"
 #include "interval.h"
 
 typedef struct IntervalTree {
@@ -12,16 +11,27 @@ typedef struct IntervalTree {
 typedef struct IntervalTreeNode {
     Interval* interval;
     double maxUpperBound;
-    struct RedisModuleString *member;
+    char *member;
     struct IntervalTreeNode *left;
     struct IntervalTreeNode *right;
 } IntervalTreeNode;
 
+typedef struct TableNode {
+    IntervalTreeNode *node;
+    struct TableNode *next;
+} TableNode;
+
+typedef struct Table {
+    size_t len;
+    size_t capacity;
+    TableNode **array;
+} Table;
+
 typedef struct HashTable {
-    int primaryArrayCapacity;
-    int secondaryArrayCapacity;
-    IntervalTreeNode **primaryArray;
-    IntervalTreeNode **secondaryArray;
+    int arrayIndex;
+    TableNode *first;
+    int nextRehashIndex;
+    Table **tables;
 } HashTable;
 
 typedef struct IntervalSet {
@@ -31,6 +41,6 @@ typedef struct IntervalSet {
 
 
 IntervalSet *createIntervalSet();
-int add(IntervalSet *intervalSet, RedisModuleString *value, Interval *interval);
+int add(IntervalSet *intervalSet, char *value, Interval *interval);
 
 #endif
