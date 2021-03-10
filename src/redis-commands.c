@@ -33,3 +33,27 @@ int iAddCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     }
 }
 
+int iCardCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+    RedisModule_AutoMemory(ctx);
+    if (argc != 2) {
+        return RedisModule_WrongArity(ctx);
+    }
+    RedisModuleString *keyName = argv[1];
+    RedisModuleKey *key = RedisModule_OpenKey(ctx, keyName, REDISMODULE_READ);
+    int type = RedisModule_KeyType(key);
+    if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != IntervalSetType) {
+        RedisModule_CloseKey(key);
+        return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
+    } else {
+        IntervalSet *intervalSet;
+        if (type == REDISMODULE_KEYTYPE_EMPTY) {
+            RedisModule_CloseKey(key);
+            return RedisModule_ReplyWithLongLong(ctx, 0);
+        } else {
+            intervalSet = RedisModule_ModuleTypeGetValue(key);
+            int len = intervalSet->hash->len;
+            RedisModule_CloseKey(key);
+            return RedisModule_ReplyWithLongLong(ctx, len);
+        }
+    }
+}

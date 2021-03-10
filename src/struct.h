@@ -7,7 +7,6 @@ typedef struct IntervalTree {
     struct IntervalTreeNode *head;
 } IntervalTree;
 
-
 typedef struct IntervalTreeNode {
     Interval* interval;
     double maxUpperBound;
@@ -16,22 +15,10 @@ typedef struct IntervalTreeNode {
     struct IntervalTreeNode *right;
 } IntervalTreeNode;
 
-typedef struct TableNode {
-    IntervalTreeNode *node;
-    struct TableNode *next;
-} TableNode;
-
-typedef struct Table {
+typedef struct HashTable {
     size_t len;
     size_t capacity;
-    TableNode **array;
-} Table;
-
-typedef struct HashTable {
-    int arrayIndex;
-    TableNode *first;
-    int nextRehashIndex;
-    Table **tables;
+    IntervalTreeNode **array;
 } HashTable;
 
 typedef struct IntervalSet {

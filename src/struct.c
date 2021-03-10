@@ -6,29 +6,26 @@ void treeAdd(IntervalSet *intervalSet, IntervalTreeNode *node);
 IntervalTreeNode *createTreeNode(Interval *interval, char *member);
 double treeNodeAdd(IntervalTreeNode *node, IntervalTreeNode *newNode);
 int hashAdd(IntervalSet *intervalSet, char *member, Interval *interval);
-void incrementalReHashIfNeeded(HashTable *hash);
-TableNode *createTableNode(HashTable *hashTable, IntervalTreeNode *node);
-Table *createTable(size_t capacity);
+void reHash(IntervalSet *intervalSet);
+HashTable *createHash(size_t capacity);
 
 IntervalSet *createIntervalSet() {
     IntervalSet *intervalSet = RedisModule_Alloc(sizeof(IntervalSet));
-    HashTable *hash = RedisModule_Alloc(sizeof(struct HashTable));
-    hash->arrayIndex = 0;
-    hash->tables = RedisModule_Alloc(2 * sizeof (Table));
-    hash->nextRehashIndex = 0;
-    hash->tables[0] = createTable(10);
+    HashTable *hash = createHash(10);
     intervalSet->hash = hash;
     intervalSet->tree = RedisModule_Alloc(sizeof(struct IntervalTree));
     intervalSet->tree->head = NULL;
     return intervalSet;
 }
 
-Table *createTable(size_t capacity) {
-    Table *table = RedisModule_Alloc(sizeof (Table));
-    table->capacity = capacity;
-    table->array = RedisModule_Alloc(capacity * sizeof(IntervalTreeNode));
-    return table;
+HashTable *createHash(size_t capacity) {
+    HashTable *hash = RedisModule_Alloc(sizeof(struct HashTable));
+    hash->len = 0;
+    hash->capacity = capacity;
+    hash->array = RedisModule_Alloc(capacity * sizeof (IntervalTreeNode));
+    return hash;
 }
+
 
 size_t getHashCode(int hashCapacity, char *key) {
     unsigned int hash = 0;
@@ -86,54 +83,38 @@ double treeNodeAdd(IntervalTreeNode *node, IntervalTreeNode *newNode) {
 }
 
 int hashAdd(IntervalSet *intervalSet, char *member, Interval *interval) {
-    incrementalReHashIfNeeded(intervalSet->hash);
-    int hashCode = getHashCode(intervalSet->hash->tables[intervalSet->hash->arrayIndex]->capacity, member);
-    TableNode *existingNode = intervalSet->hash->tables[intervalSet->hash->arrayIndex]->array[hashCode];
+    int hashCode = getHashCode(intervalSet->hash->capacity, member);
+    IntervalTreeNode *existingNode = intervalSet->hash->array[hashCode];
     if (existingNode == NULL) {
         IntervalTreeNode *node = createTreeNode(interval, member);
-        TableNode *tableNode = createTableNode(intervalSet->hash, node);
-        intervalSet->hash->tables[intervalSet->hash->arrayIndex]->array[hashCode] = tableNode;
-        intervalSet->hash->tables[intervalSet->hash->arrayIndex]->len++;
+        intervalSet->hash->array[hashCode] = node;
+        intervalSet->hash->len++;
         treeAdd(intervalSet, node);
         return 1;
     } else {
-        if (strcmp(existingNode->node->member, member) == 0) {
-            RedisModule_Free(intervalSet->hash->tables[intervalSet->hash->arrayIndex]->array[hashCode]->node->interval);
-            intervalSet->hash->tables[intervalSet->hash->arrayIndex]->array[hashCode]->node->interval = interval;
+        if (strcmp(existingNode->member, member) == 0) {
+            RedisModule_Free(intervalSet->hash->array[hashCode]->interval);
+            intervalSet->hash->array[hashCode]->interval = interval;
             return 0;
         } else {
-            intervalSet->hash->arrayIndex = 1;
+            reHash(intervalSet);
             return hashAdd(intervalSet, member, interval);
         }
     }
 }
 
-TableNode *createTableNode(HashTable *hashTable, IntervalTreeNode *node) {
-    TableNode *result = RedisModule_Alloc(sizeof (TableNode));
-    result->next = hashTable->first;
-    result->node = node;
-    return result;
-}
-
-void incrementalReHashIfNeeded(struct HashTable *hash) {
-    if (hash->arrayIndex == 1) {
-        hash->tables[1] = createTable(hash->tables[0]->capacity * 2);
-        int i = 0;
-        for (; hash->nextRehashIndex < hash->tables[0]->capacity && i <= 1000; hash->nextRehashIndex++) {
-            if (hash->tables[0]->array[hash->nextRehashIndex] != NULL) {
-                int hashCode = getHashCode(hash->tables[0]->capacity, hash->tables[0]->array[hash->nextRehashIndex]->node->member);
-                hash->tables[1]->array[hashCode] = hash->tables[0]->array[hash->nextRehashIndex];
-                hash->tables[1]->len++;
-                hash->tables[0]->array[hash->nextRehashIndex] = NULL;
-                hash->tables[0]->len--;
-            }
-            if (hash->tables[0]->len == 0) {
-                hash->arrayIndex = 0;
-                hash->tables[0] = hash->tables[1];
-                RedisModule_Free(hash->tables[1]);
-                break;
-            }
-            i++;
+void reHash(IntervalSet *intervalSet) {
+    HashTable *newHash = createHash(intervalSet->hash->capacity * 2);
+    for (int i = 0; i < intervalSet->hash->capacity; i++) {
+        IntervalTreeNode *node = intervalSet->hash->array[i];
+        if (node != NULL) {
+            int newHashCode = getHashCode(newHash->capacity, intervalSet->hash->array[i]->member);
+            newHash->array[newHashCode] = node;
+            newHash->len++;
+            intervalSet->hash->array[i] = NULL;
+            intervalSet->hash->len--;
         }
     }
+    RedisModule_Free(intervalSet->hash);
+    intervalSet->hash = newHash;
 }
