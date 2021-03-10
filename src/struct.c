@@ -103,6 +103,7 @@ int hashAdd(IntervalSet *intervalSet, char *member, Interval *interval) {
     }
 }
 
+// TODO implement incremental rehashing instead
 void reHash(IntervalSet *intervalSet) {
     HashTable *newHash = createHash(intervalSet->hash->capacity * 2);
     for (int i = 0; i < intervalSet->hash->capacity; i++) {
