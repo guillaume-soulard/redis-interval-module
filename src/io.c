@@ -1,5 +1,6 @@
 #include "io.h"
 #include "redismodule.h"
+#include "struct.h"
 
 void *IntervalSetTypeRdbLoad(RedisModuleIO *rdb, int encver) {
     return NULL;
@@ -13,14 +14,6 @@ void IntervalSetTypeAofRewrite(RedisModuleIO *aof, RedisModuleString *key, void 
 
 }
 
-size_t IntervalSetTypeMemUsage(const void *value) {
-    return 0;
-}
-
 void IntervalSetTypeFree(void *value) {
-
-}
-
-void IntervalSetTypeDigest(RedisModuleDigest *md, void *value) {
-
+    freeIntervalSet(value);
 }
