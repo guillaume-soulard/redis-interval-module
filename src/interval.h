@@ -10,6 +10,7 @@ typedef struct Interval {
     int includeUpperBound;
 } Interval;
 
+Interval *createInterval(int includeLowerBound, double lowerBound, double upperBound, int includeUpperBound);
 Interval *parseInterval(RedisModuleString *intervalString);
 
 #endif

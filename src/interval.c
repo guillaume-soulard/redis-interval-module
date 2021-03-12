@@ -2,6 +2,15 @@
 #include "stdlib.h"
 #include "interval.h"
 
+Interval *createInterval(int includeLowerBound, double lowerBound, double upperBound, int includeUpperBound) {
+    Interval *interval = RedisModule_Alloc(sizeof (Interval));
+    interval->includeLowerBound = includeLowerBound;
+    interval->includeUpperBound = includeUpperBound;
+    interval->lowerBound = lowerBound;
+    interval->upperBound = upperBound;
+    return interval;
+}
+
 Interval *parseInterval(RedisModuleString *intervalString) {
     size_t len;
     const char *str = RedisModule_StringPtrLen(intervalString, &len);
@@ -41,10 +50,5 @@ Interval *parseInterval(RedisModuleString *intervalString) {
     if (lowerBound > upperBound) {
         return NULL;
     }
-    Interval *interval = RedisModule_Alloc(sizeof (Interval));
-    interval->includeLowerBound = includeLowerBound;
-    interval->includeUpperBound = includeUpperBound;
-    interval->lowerBound = lowerBound;
-    interval->upperBound = upperBound;
-    return interval;
+    return createInterval(includeLowerBound, lowerBound, upperBound, includeUpperBound);
 }
