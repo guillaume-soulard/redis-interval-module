@@ -65,6 +65,7 @@ int add(IntervalSet *intervalSet, char *member, Interval *interval) {
     return hashAdd(intervalSet, member, interval);
 }
 
+// TODO rebalance the tree
 void treeAdd(IntervalSet *intervalSet, IntervalTreeNode *node) {
     if (intervalSet->tree->head == NULL) {
         intervalSet->tree->head = node;
@@ -180,14 +181,13 @@ int hashAdd(IntervalSet *intervalSet, char *member, Interval *interval) {
 // TODO implement incremental rehashing instead
 void reHash(IntervalSet *intervalSet) {
     HashTable *newHash = createHash(intervalSet->hash->capacity * 2);
+    newHash->len = intervalSet->hash->len;
     for (int i = 0; i < intervalSet->hash->capacity; i++) {
         IntervalTreeNode *node = intervalSet->hash->array[i];
         if (node != NULL) {
             int newHashCode = getHashCode(newHash->capacity, intervalSet->hash->array[i]->member);
             newHash->array[newHashCode] = node;
-            newHash->len++;
             intervalSet->hash->array[i] = NULL;
-            intervalSet->hash->len--;
         }
     }
     RedisModule_Free(intervalSet->hash);
