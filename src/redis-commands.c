@@ -57,3 +57,32 @@ int iCardCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
         }
     }
 }
+
+int iContainsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+    RedisModule_AutoMemory(ctx);
+    if (argc != 3) {
+        return RedisModule_WrongArity(ctx);
+    }
+    RedisModuleString *keyName = argv[1];
+    RedisModuleKey *key = RedisModule_OpenKey(ctx, keyName, REDISMODULE_READ);
+    int type = RedisModule_KeyType(key);
+    if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != IntervalSetType) {
+        RedisModule_CloseKey(key);
+        return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
+    } else {
+        IntervalSet *intervalSet;
+        if (type == REDISMODULE_KEYTYPE_EMPTY) {
+            RedisModule_CloseKey(key);
+            return RedisModule_ReplyWithEmptyArray(ctx);
+        } else {
+            intervalSet = RedisModule_ModuleTypeGetValue(key);
+            double valueToSearch = 0;
+            if (RedisModule_StringToDouble(argv[2], &valueToSearch) == REDISMODULE_ERR) {
+                return RedisModule_ReplyWithError(ctx, "incorrect value");
+            }
+            int reply = searchValue(ctx, intervalSet, valueToSearch);
+            RedisModule_CloseKey(key);
+            return reply;
+        }
+    }
+}

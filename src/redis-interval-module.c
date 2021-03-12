@@ -24,7 +24,10 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx) {
     if (RedisModule_CreateCommand(ctx, "iadd", iAddCommand, "write", 1, 1, 1) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
     }
-    if (RedisModule_CreateCommand(ctx, "icard", iCardCommand, "write", 1, 1, 1) == REDISMODULE_ERR) {
+    if (RedisModule_CreateCommand(ctx, "icard", iCardCommand, "readonly", 1, 1, 1) == REDISMODULE_ERR) {
+        return REDISMODULE_ERR;
+    }
+    if (RedisModule_CreateCommand(ctx, "icontains", iContainsCommand, "readonly", 1, 1, 1) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
     }
     return REDISMODULE_OK;

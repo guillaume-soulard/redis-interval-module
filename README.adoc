@@ -19,6 +19,8 @@ Examples :
 
 IADD <key> [<interval> <member>]...
 
+ICARD <key>
+
 IREM <key> [<member>]...
 
 ICONTAINS <key> <double>

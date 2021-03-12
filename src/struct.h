@@ -29,5 +29,6 @@ typedef struct IntervalSet {
 
 IntervalSet *createIntervalSet();
 int add(IntervalSet *intervalSet, char *value, Interval *interval);
+int searchValue(RedisModuleCtx *ctx, IntervalSet *intervalSet, double valueToSearch);
 
 #endif
