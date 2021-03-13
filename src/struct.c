@@ -12,7 +12,6 @@ HashTable *createHash(size_t capacity);
 void treeSearch(RedisModuleCtx *ctx, IntervalTreeNode *node, double valueToSearch, int *len);
 void outputInterval(RedisModuleCtx *ctx, IntervalTreeNode *node);
 bool containsValue(Interval *interval, double value);
-void freeIntervalNode(IntervalTreeNode *node);
 
 IntervalSet *createIntervalSet() {
     IntervalSet *intervalSet = RedisModule_Alloc(sizeof(IntervalSet));
@@ -21,27 +20,6 @@ IntervalSet *createIntervalSet() {
     intervalSet->tree = RedisModule_Alloc(sizeof(struct IntervalTree));
     intervalSet->tree->head = NULL;
     return intervalSet;
-}
-
-void freeIntervalSet(IntervalSet *intervalSet) {
-    for (int i = 0; i < intervalSet->hash->capacity; i++){
-        intervalSet->hash->array[i] = NULL;
-    }
-    RedisModule_Free(intervalSet->hash->array);
-    RedisModule_Free(intervalSet->hash);
-    freeIntervalNode(intervalSet->tree->head);
-    RedisModule_Free(intervalSet->tree);
-    RedisModule_Free(intervalSet);
-}
-
-void freeIntervalNode(IntervalTreeNode *node) {
-    if (node != NULL) {
-        RedisModule_Free(node->member);
-        RedisModule_Free(node->interval);
-        freeIntervalNode(node->left);
-        freeIntervalNode(node->right);
-        RedisModule_Free(node);
-    }
 }
 
 HashTable *createHash(size_t capacity) {

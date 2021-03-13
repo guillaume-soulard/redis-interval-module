@@ -1,6 +1,9 @@
 #include "redismodule.h"
 #include "stdlib.h"
 #include "interval.h"
+#include "string.h"
+
+#define doubleBufferSize 512
 
 Interval *createInterval(int includeLowerBound, double lowerBound, double upperBound, int includeUpperBound) {
     Interval *interval = RedisModule_Alloc(sizeof (Interval));
@@ -14,10 +17,7 @@ Interval *createInterval(int includeLowerBound, double lowerBound, double upperB
 Interval *parseInterval(RedisModuleString *intervalString) {
     size_t len;
     const char *str = RedisModule_StringPtrLen(intervalString, &len);
-    char bounds[2][40] = {
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-    };
+    char bounds[2][doubleBufferSize];
     int i;
     int partIndex = 0;
     int partIterator = 0;
@@ -36,7 +36,7 @@ Interval *parseInterval(RedisModuleString *intervalString) {
         } else if (str[i] == ',') {
             partIndex = 1;
             partIterator = 0;
-        } else if (str[i] != '[' && str[i] != ']' && partIterator < 40) {
+        } else if (str[i] != '[' && str[i] != ']' && partIterator < doubleBufferSize) {
             bounds[partIndex][partIterator] = str[i];
             missingBound[partIndex] = 0;
             partIterator++;
