@@ -32,13 +32,15 @@ HashTable *createHash(size_t capacity) {
 
 int add(IntervalSet *intervalSet, char *member, Interval *interval) {
     intervalSet->tree = insert(intervalSet->tree, interval->lowerBound, member, interval);
+    intervalSet->hash->len++;
     return 1;
 }
 
 int searchValue(RedisModuleCtx *ctx, IntervalSet *intervalSet, double valueToSearch) {
     RedisModule_ReplyWithArray(ctx,REDISMODULE_POSTPONED_ARRAY_LEN);
     int len = 0;
-    findContains(intervalSet->tree, valueToSearch, ctx, &len);
+    int read = 0;
+    findContains(intervalSet->tree, valueToSearch, ctx, &len, &read);
     RedisModule_ReplySetArrayLength(ctx, len);
     return REDISMODULE_OK;
 }

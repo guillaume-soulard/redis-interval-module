@@ -17,6 +17,6 @@ typedef struct AVLnode avlNode;
 
 avlNode *insert(avlNode *node, double key, char *member, Interval *interval);
 avlNode *delete(avlNode *node, double queryNum);
-void findContains(avlNode *node, double value, struct RedisModuleCtx *ctx, int *len);
+void findContains(avlNode *node, double value, struct RedisModuleCtx *ctx, int *len, int *read);
 
 #endif

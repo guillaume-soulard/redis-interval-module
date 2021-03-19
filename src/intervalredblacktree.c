@@ -7,6 +7,7 @@ struct AVLnode {
     double key;
     Interval *interval;
     double maxUpper;
+    double minLower;
     char *member;
     struct AVLnode *left;
     struct AVLnode *right;
@@ -18,12 +19,17 @@ double max(double a, double b) {
     return (a > b) ? a : b;
 }
 
+double min(double a, double b) {
+    return (a < b) ? a : b;
+}
+
 avlNode *newNode(double key, char *member, Interval *interval) {
     avlNode *node = RedisModule_Alloc(sizeof(avlNode));
     node->key = key;
     node->interval = interval;
     node->member = member;
     node->maxUpper = interval->upperBound;
+    node->minLower = interval->lowerBound;
     node->left = NULL;
     node->right = NULL;
     node->height = 0;
@@ -42,6 +48,20 @@ double maxUpperBound(avlNode *node) {
     double maxUpper = max(node->interval->upperBound, rightMaxUpperBound);
     maxUpper = max(maxUpper, leftMaxUpperBound);
     return maxUpper;
+}
+
+double minLowerBound(avlNode *node) {
+    double rightMinLowerBound = DBL_MAX;
+    double leftMinLowerBound = DBL_MAX;
+    if (node->right != NULL) {
+        rightMinLowerBound = minLowerBound(node->right);
+    }
+    if (node->left != NULL) {
+        leftMinLowerBound = minLowerBound(node->left);
+    }
+    double minLower = min(node->interval->lowerBound, rightMinLowerBound);
+    minLower = min(minLower, leftMinLowerBound);
+    return minLower;
 }
 
 double nodeHeight(avlNode *node) {
@@ -73,6 +93,8 @@ avlNode *rightRotate(avlNode *z) {
     y->height = (max(nodeHeight(y->left), nodeHeight(y->right)) + 1);
     z->maxUpper = maxUpperBound(z);
     y->maxUpper = maxUpperBound(y);
+    z->minLower = minLowerBound(z);
+    y->minLower = minLowerBound(y);
     return y;
 }
 
@@ -85,6 +107,8 @@ avlNode *leftRotate(avlNode *z) {
     y->height = (max(nodeHeight(y->left), nodeHeight(y->right)) + 1);
     z->maxUpper = maxUpperBound(z);
     y->maxUpper = maxUpperBound(y);
+    z->minLower = minLowerBound(z);
+    y->minLower = minLowerBound(y);
     return y;
 }
 
@@ -109,6 +133,7 @@ avlNode *insert(avlNode *node, double key, char *member, Interval *interval) {
 
     node->height = (max(nodeHeight(node->left), nodeHeight(node->right)) + 1);
     node->maxUpper = maxUpperBound(node);
+    node->minLower = minLowerBound(node);
     double balance = heightDiff(node);
 
     if (balance > 1 && key < (node->left->key)) {
@@ -139,8 +164,6 @@ avlNode *delete(avlNode *node, double queryNum) {
     else {
         if ((node->left == NULL) || (node->right == NULL)) {
             avlNode *temp = node->left ? node->left : node->right;
-
-            /* No Child*/
             if (temp == NULL) {
                 temp = node;
                 node = NULL;
@@ -158,8 +181,8 @@ avlNode *delete(avlNode *node, double queryNum) {
     if (node == NULL)
         return node;
 
-
     node->maxUpper = maxUpperBound(node);
+    node->minLower = minLowerBound(node);
     node->height = (max(nodeHeight(node->left), nodeHeight(node->right)) + 1);
 
     double balance = heightDiff(node);
@@ -181,17 +204,18 @@ avlNode *delete(avlNode *node, double queryNum) {
     return node;
 }
 
-void findContains(avlNode *node, double value, struct RedisModuleCtx *ctx, int *len) {
+void findContains(avlNode *node, double value, struct RedisModuleCtx *ctx, int *len, int *read) {
     if (node != NULL) {
+        (*read)++;
         if (containsValue(node->interval, value)) {
             outputInterval(ctx, node->member, node->interval);
             (*len)++;
         }
-        if (value >= node->key && value <= node->maxUpper) {
-            findContains(node->left, value, ctx, len);
+        if (node->left != NULL && node->left->minLower <= value && value <= node->left->maxUpper) {
+            findContains(node->left, value, ctx, len, read);
         }
-        else if (value < node->key && value <= node->maxUpper) {
-            findContains(node->right, value, ctx, len);
+        if (node->right != NULL && node->right->minLower <= value && value <= node->right->maxUpper) {
+            findContains(node->right, value, ctx, len, read);
         }
     }
 }
