@@ -2,27 +2,17 @@
 #define STRUCT_H
 
 #include "interval.h"
+#include "intervalredblacktree.h"
 
-typedef struct IntervalTree {
-    struct IntervalTreeNode *head;
-} IntervalTree;
-
-typedef struct IntervalTreeNode {
-    Interval* interval;
-    double maxUpperBound;
-    char *member;
-    struct IntervalTreeNode *left;
-    struct IntervalTreeNode *right;
-} IntervalTreeNode;
 
 typedef struct HashTable {
     size_t len;
     size_t capacity;
-    IntervalTreeNode **array;
+    struct AVLnode **array;
 } HashTable;
 
 typedef struct IntervalSet {
-    IntervalTree *tree;
+    struct AVLnode *tree;
     HashTable *hash;
 } IntervalSet;
 

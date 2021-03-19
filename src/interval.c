@@ -52,3 +52,29 @@ Interval *parseInterval(RedisModuleString *intervalString) {
     }
     return createInterval(includeLowerBound, lowerBound, upperBound, includeUpperBound);
 }
+
+bool containsValue(Interval *interval, double value) {
+    int lowerBoundMatch = 0;
+    int upperBoundMatch = 0;
+    if ((interval->includeLowerBound == 1 && interval->lowerBound <= value) || (interval->includeLowerBound == 0 && interval->lowerBound < value)) {
+        lowerBoundMatch = 1;
+    }
+    if ((interval->includeUpperBound == 1 && interval->upperBound >= value) || (interval->includeUpperBound == 0 && interval->upperBound > value)) {
+        upperBoundMatch = 1;
+    }
+    if (lowerBoundMatch == 1 && upperBoundMatch == 1) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+void outputInterval(RedisModuleCtx *ctx, char *member, Interval *interval) {
+    RedisModule_ReplyWithArray(ctx,REDISMODULE_POSTPONED_ARRAY_LEN);
+    RedisModule_ReplyWithCString(ctx, member);
+    RedisModule_ReplyWithDouble(ctx, interval->includeLowerBound);
+    RedisModule_ReplyWithDouble(ctx, interval->lowerBound);
+    RedisModule_ReplyWithDouble(ctx, interval->includeUpperBound);
+    RedisModule_ReplyWithDouble(ctx, interval->upperBound);
+    RedisModule_ReplySetArrayLength(ctx, 5);
+}
