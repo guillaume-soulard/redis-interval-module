@@ -2,17 +2,17 @@
 #define STRUCT_H
 
 #include "interval.h"
-#include "intervalredblacktree.h"
+#include "interval-red-black-tree.h"
 
 
 typedef struct HashTable {
     size_t len;
     size_t capacity;
-    struct AVLnode **array;
+    Node **array;
 } HashTable;
 
 typedef struct IntervalSet {
-    struct AVLnode *tree;
+    Node *tree;
     HashTable *hash;
 } IntervalSet;
 

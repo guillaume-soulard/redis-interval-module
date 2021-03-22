@@ -1,6 +1,6 @@
 #include "struct.h"
 #include "string.h"
-#include "intervalredblacktree.h"
+#include "interval-red-black-tree.h"
 
 //int hashAdd(IntervalSet *intervalSet, char *member, Interval *interval);
 //void reHash(IntervalSet *intervalSet);
@@ -18,7 +18,7 @@ HashTable *createHash(size_t capacity) {
     HashTable *hash = RedisModule_Alloc(sizeof(struct HashTable));
     hash->len = 0;
     hash->capacity = capacity;
-    hash->array = RedisModule_Alloc(capacity * sizeof (struct AVLnode));
+    hash->array = RedisModule_Alloc(capacity * sizeof (Node));
     return hash;
 }
 
@@ -31,7 +31,7 @@ HashTable *createHash(size_t capacity) {
 //}
 
 int add(IntervalSet *intervalSet, char *member, Interval *interval) {
-    intervalSet->tree = insert(intervalSet->tree, interval->lowerBound, member, interval);
+    insertNode(interval->lowerBound, &intervalSet->tree, member, interval);
     intervalSet->hash->len++;
     return 1;
 }
