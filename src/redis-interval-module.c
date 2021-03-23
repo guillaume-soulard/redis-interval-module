@@ -75,8 +75,31 @@ int iContainsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
             if (RedisModule_StringToDouble(argv[2], &valueToSearch) == REDISMODULE_ERR) {
                 return RedisModule_ReplyWithError(ctx, "incorrect value");
             }
-            int reply = searchValue(ctx, intervalSet, valueToSearch);
-            return reply;
+            searchValue(ctx, intervalSet, valueToSearch);
+            return REDISMODULE_OK;
+        }
+    }
+}
+
+int iOverlapsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+    RedisModule_AutoMemory(ctx);
+    if (argc != 3) {
+        return RedisModule_WrongArity(ctx);
+    }
+    RedisModuleString *keyName = argv[1];
+    RedisModuleKey *key = RedisModule_OpenKey(ctx, keyName, REDISMODULE_READ);
+    int type = RedisModule_KeyType(key);
+    if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != IntervalSetType) {
+        return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
+    } else {
+        IntervalSet *intervalSet;
+        if (type == REDISMODULE_KEYTYPE_EMPTY) {
+            return RedisModule_ReplyWithEmptyArray(ctx);
+        } else {
+            intervalSet = RedisModule_ModuleTypeGetValue(key);
+            Interval *intervalToSearch = parseInterval(argv[2]);
+            searchInterval(ctx, intervalSet, intervalToSearch);
+            return REDISMODULE_OK;
         }
     }
 }
@@ -105,6 +128,9 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx) {
         return REDISMODULE_ERR;
     }
     if (RedisModule_CreateCommand(ctx, "icontains", iContainsCommand, "readonly", 1, 1, 1) == REDISMODULE_ERR) {
+        return REDISMODULE_ERR;
+    }
+    if (RedisModule_CreateCommand(ctx, "ioverlaps", iOverlapsCommand, "readonly", 1, 1, 1) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
     }
     return REDISMODULE_OK;

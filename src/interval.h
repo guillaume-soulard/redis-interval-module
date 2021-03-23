@@ -2,7 +2,6 @@
 #define INTERVAL_H
 
 #include "redismodule.h"
-#include <stdbool.h>
 
 typedef struct Interval {
     double lowerBound;
@@ -13,7 +12,8 @@ typedef struct Interval {
 
 Interval *createInterval(int includeLowerBound, double lowerBound, double upperBound, int includeUpperBound);
 Interval *parseInterval(RedisModuleString *intervalString);
-bool containsValue(Interval *interval, double value);
+int containsValue(Interval *interval, double value, int includeValue);
+int overlaps(Interval *interval1, Interval *interval2);
 void outputInterval(RedisModuleCtx *ctx, char *member, Interval *interval);
 
 #endif

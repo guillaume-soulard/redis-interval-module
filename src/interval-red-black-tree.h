@@ -27,7 +27,8 @@ void insertNode(double val, Node **root, char *member, Interval *interval);
 void checkForCase2(Node *toDelete, int delete, int fromDirection, Node **root);
 void deleteNode(double val, Node **root);
 void checkBlack(Node *temp, int c);
-void findContains(Node *node, double value, struct RedisModuleCtx *ctx, int *len, int *read);
+void findContains(Node *node, double value, struct RedisModuleCtx *ctx, int *len);
+void findOverlaps(Node *node, Interval *intervalToSearch, struct RedisModuleCtx *ctx, int *len);
 void freeIntervalSetTreeNode(Node *node);
 
 #endif

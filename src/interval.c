@@ -56,20 +56,36 @@ Interval *parseInterval(RedisModuleString *intervalString) {
     return createInterval(includeLowerBound, lowerBound, upperBound, includeUpperBound);
 }
 
-bool containsValue(Interval *interval, double value) {
+int containsValue(Interval *interval, double value, int includeValue) {
     int lowerBoundMatch = 0;
     int upperBoundMatch = 0;
-    if ((interval->includeLowerBound == 1 && interval->lowerBound <= value) || (interval->includeLowerBound == 0 && interval->lowerBound < value)) {
-        lowerBoundMatch = 1;
-    }
-    if ((interval->includeUpperBound == 1 && interval->upperBound >= value) || (interval->includeUpperBound == 0 && interval->upperBound > value)) {
-        upperBoundMatch = 1;
+    if (includeValue) {
+        if ((interval->includeLowerBound == 1 && interval->lowerBound <= value) ||
+            (interval->includeLowerBound == 0 && interval->lowerBound < value)) {
+            lowerBoundMatch = 1;
+        }
+        if ((interval->includeUpperBound == 1 && interval->upperBound >= value) ||
+            (interval->includeUpperBound == 0 && interval->upperBound > value)) {
+            upperBoundMatch = 1;
+        }
+    } else {
+        if (interval->lowerBound < value) {
+            lowerBoundMatch = 1;
+        }
+        if (interval->upperBound > value) {
+            upperBoundMatch = 1;
+        }
     }
     if (lowerBoundMatch == 1 && upperBoundMatch == 1) {
         return 1;
     } else {
         return 0;
     }
+}
+
+int overlaps(Interval *interval1, Interval *interval2) {
+    return containsValue(interval1, interval2->lowerBound, interval2->includeLowerBound) ||
+            containsValue(interval1, interval2->upperBound, interval2->includeUpperBound);
 }
 
 void outputInterval(RedisModuleCtx *ctx, char *member, Interval *interval) {

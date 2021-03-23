@@ -36,13 +36,18 @@ int add(IntervalSet *intervalSet, char *member, Interval *interval) {
     return 1;
 }
 
-int searchValue(RedisModuleCtx *ctx, IntervalSet *intervalSet, double valueToSearch) {
+void searchValue(RedisModuleCtx *ctx, IntervalSet *intervalSet, double valueToSearch) {
     RedisModule_ReplyWithArray(ctx,REDISMODULE_POSTPONED_ARRAY_LEN);
     int len = 0;
-    int read = 0;
-    findContains(intervalSet->tree, valueToSearch, ctx, &len, &read);
+    findContains(intervalSet->tree, valueToSearch, ctx, &len);
     RedisModule_ReplySetArrayLength(ctx, len);
-    return REDISMODULE_OK;
+}
+
+void searchInterval(RedisModuleCtx *ctx, IntervalSet *intervalSet, Interval *intervalToSearch) {
+    RedisModule_ReplyWithArray(ctx,REDISMODULE_POSTPONED_ARRAY_LEN);
+    int len = 0;
+    findOverlaps(intervalSet->tree, intervalToSearch, ctx, &len);
+    RedisModule_ReplySetArrayLength(ctx, len);
 }
 
 //int hashAdd(IntervalSet *intervalSet, char *member, Interval *interval) {

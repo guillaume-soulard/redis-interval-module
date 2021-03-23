@@ -632,18 +632,38 @@ void checkBlack(Node *temp, int c) {
     checkBlack(temp->right, c);
 }
 
-void findContains(Node *node, double value, struct RedisModuleCtx *ctx, int *len, int *read) {
+void findContains(Node *node, double value, struct RedisModuleCtx *ctx, int *len) {
     if (node != NULL) {
-        (*read)++;
-        if (containsValue(node->interval, value)) {
+        if (containsValue(node->interval, value, 1)) {
             outputInterval(ctx, node->member, node->interval);
             (*len)++;
         }
         if (node->left != NULL && node->left->minLower <= value && value <= node->left->maxUpper) {
-            findContains(node->left, value, ctx, len, read);
+            findContains(node->left, value, ctx, len);
         }
         if (node->right != NULL && node->right->minLower <= value && value <= node->right->maxUpper) {
-            findContains(node->right, value, ctx, len, read);
+            findContains(node->right, value, ctx, len);
+        }
+    }
+}
+
+void findOverlaps(Node *node, Interval *intervalToSearch, struct RedisModuleCtx *ctx, int *len) {
+    if (node != NULL) {
+        if (overlaps(node->interval, intervalToSearch)) {
+            outputInterval(ctx, node->member, node->interval);
+            (*len)++;
+        }
+        if (node->left != NULL && (
+                (node->left->minLower <= intervalToSearch->lowerBound && intervalToSearch->lowerBound <= node->left->maxUpper) ||
+                (node->left->minLower <= intervalToSearch->upperBound && intervalToSearch->upperBound <= node->left->maxUpper)
+        )) {
+            findOverlaps(node->left, intervalToSearch, ctx, len);
+        }
+        if (node->right != NULL && (
+                (node->right->minLower <= intervalToSearch->lowerBound && intervalToSearch->lowerBound <= node->right->maxUpper) ||
+                (node->right->minLower <= intervalToSearch->upperBound && intervalToSearch->upperBound <= node->right->maxUpper)
+        )) {
+            findOverlaps(node->right, intervalToSearch, ctx, len);
         }
     }
 }
