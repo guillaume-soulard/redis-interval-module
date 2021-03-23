@@ -4,7 +4,6 @@
 #include "interval.h"
 #include "interval-red-black-tree.h"
 
-
 typedef struct HashTable {
     size_t len;
     size_t capacity;

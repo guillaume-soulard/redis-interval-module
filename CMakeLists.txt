@@ -13,5 +13,4 @@ add_library(
         src/interval.c
         src/io.h
         src/io.c
-        src/intervalavltree.h
-        src/intervalavltree.c src/interval-red-black-tree.c)
+        src/interval-red-black-tree.c)

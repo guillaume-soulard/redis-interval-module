@@ -28,6 +28,50 @@ int isLeaf(Node *n) {
     return 0;
 }
 
+double max(double d1, double d2, double d3) {
+    double result = d1;
+    if (result < d2) {
+        result = d2;
+    }
+    if (result < d3) {
+        result = d3;
+    }
+    return result;
+}
+
+double min(double d1, double d2, double d3) {
+    double result = d1;
+    if (result > d2) {
+        result = d2;
+    }
+    if (result > d3) {
+        result = d3;
+    }
+    return result;
+}
+
+void updateParentBounds(Node *node) {
+    if (node != NULL) {
+        double leftMinLower = DBL_MAX;
+        double rightMinLower = DBL_MAX;
+        double leftMaxUpper = DBL_MIN;
+        double rightMaxUpper = DBL_MIN;
+        if (node->left != NULL) {
+            leftMinLower = node->left->minLower;
+            leftMaxUpper = node->left->maxUpper;
+        }
+        if (node->right != NULL) {
+            rightMinLower = node->right->minLower;
+            rightMaxUpper = node->right->maxUpper;
+        }
+        node->minLower = min(node->minLower, leftMinLower, rightMinLower);
+        node->maxUpper = max(node->maxUpper, leftMaxUpper, rightMaxUpper);
+        if (node->par != NULL) {
+            updateParentBounds(node->par);
+        }
+    }
+}
+
 // Left Rotate
 Node *leftRotate(Node *node) {
     Node *parent = node->par;
@@ -70,48 +114,6 @@ Node *rightRotate(Node *node) {
         }
     }
     return node;
-}
-
-double max(double d1, double d2, double d3) {
-    double result = d1;
-    if (result < d2) {
-        result = d2;
-    }
-    if (result < d3) {
-        result = d3;
-    }
-    return result;
-}
-
-double min(double d1, double d2, double d3) {
-    double result = d1;
-    if (result > d2) {
-        result = d2;
-    }
-    if (result > d3) {
-        result = d3;
-    }
-    return result;
-}
-
-void updateParentBounds(Node *node) {
-    double leftMinLower = DBL_MAX;
-    double rightMinLower = DBL_MAX;
-    double leftMaxUpper = DBL_MIN;
-    double rightMaxUpper = DBL_MIN;
-    if (node->left != NULL) {
-        leftMinLower = node->left->minLower;
-        leftMaxUpper = node->left->maxUpper;
-    }
-    if (node->right != NULL) {
-        leftMinLower = node->right->minLower;
-        leftMaxUpper = node->right->maxUpper;
-    }
-    node->minLower = min(node->minLower, leftMinLower, rightMinLower);
-    node->maxUpper = max(node->maxUpper, leftMaxUpper, rightMaxUpper);
-    if (node->par != NULL) {
-        updateParentBounds(node->par);
-    }
 }
 
 // Check the node after the insertion step
@@ -265,6 +267,10 @@ void checkNode(Node *node) {
                 grandParent->color = 1;
             }
         }
+        updateParentBounds(greatGrandParent);
+        updateParentBounds(grandParent);
+        updateParentBounds(parent);
+        updateParentBounds(child);
         updateParentBounds(node);
     }
 }
@@ -272,8 +278,10 @@ void checkNode(Node *node) {
 // To insert a node in the existing tree
 void insertNode(double val, Node **root, char *member, Interval *interval) {
     Node *buffRoot = *root;
+    Node *insertedNode;
     if (*root == NULL) {
-        *root = newNode(val, NULL, member, interval);
+        insertedNode = newNode(val, NULL, member, interval);
+        *root = insertedNode;
         (*root)->color = 0;
         return;
     }
@@ -284,10 +292,9 @@ void insertNode(double val, Node **root, char *member, Interval *interval) {
                 buffRoot = buffRoot->left;
             } else {
                 // Insert The Node
-                Node *toInsert = newNode(val, buffRoot, member, interval);
-                buffRoot->left = toInsert;
-                buffRoot = toInsert;
-                updateParentBounds(buffRoot);
+                insertedNode = newNode(val, buffRoot, member, interval);
+                buffRoot->left = insertedNode;
+                buffRoot = insertedNode;
                 // Check For Double Red Problems
                 break;
             }
@@ -297,16 +304,14 @@ void insertNode(double val, Node **root, char *member, Interval *interval) {
                 buffRoot = buffRoot->right;
             } else {
                 // Insert The Node
-                Node *toInsert = newNode(val, buffRoot, member, interval);
-                buffRoot->right = toInsert;
-                buffRoot = toInsert;
-                updateParentBounds(buffRoot);
+                insertedNode = newNode(val, buffRoot, member, interval);
+                buffRoot->right = insertedNode;
+                buffRoot = insertedNode;
                 // Check For Double Red Problems
                 break;
             }
         }
     }
-
     while (buffRoot != *root) {
         checkNode(buffRoot);
         if (buffRoot->par == NULL) {
@@ -318,6 +323,7 @@ void insertNode(double val, Node **root, char *member, Interval *interval) {
             buffRoot->color = 0;
         }
     }
+    updateParentBounds(insertedNode);
 }
 
 void checkForCase2(Node *toDelete, int delete, int fromDirection, Node **root) {
@@ -608,7 +614,7 @@ void deleteNode(double val, Node **root) {
         }
 
         // Remove the node from memory
-        free(toDelete);
+        freeIntervalSetTreeNode(toDelete);
     } else {  // Case 2
         checkForCase2(toDelete, 1, ((toDelete->par->right == toDelete)), root);
     }
