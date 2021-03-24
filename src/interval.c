@@ -85,7 +85,9 @@ int containsValue(Interval *interval, double value, int includeValue) {
 
 int overlaps(Interval *interval1, Interval *interval2) {
     return containsValue(interval1, interval2->lowerBound, interval2->includeLowerBound) ||
-            containsValue(interval1, interval2->upperBound, interval2->includeUpperBound);
+            containsValue(interval1, interval2->upperBound, interval2->includeUpperBound) ||
+            containsValue(interval2, interval1->upperBound, interval1->includeUpperBound) ||
+            containsValue(interval2, interval1->upperBound, interval1->includeUpperBound);
 }
 
 void outputInterval(RedisModuleCtx *ctx, char *member, Interval *interval) {
