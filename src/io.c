@@ -1,8 +1,9 @@
 #include "io.h"
 #include "redismodule.h"
-#include "struct.h"
+#include "interval-set.h"
 #include "interval-red-black-tree.h"
 #include "string.h"
+#include "hashmap.h"
 
 void *IntervalSetTypeRdbLoad(RedisModuleIO *rdb, int encver) {
     if (encver != 0) {
@@ -69,7 +70,7 @@ void IntervalSetTypeAofRewrite(RedisModuleIO *aof, RedisModuleString *key, void 
 }
 
 void freeIntervalSet(IntervalSet *intervalSet) {
-    RedisModule_Free(intervalSet->hash->array);
+    freeHashMap(intervalSet->hash);
     RedisModule_Free(intervalSet->hash);
     freeIntervalSetTreeNode(intervalSet->tree);
     RedisModule_Free(intervalSet);

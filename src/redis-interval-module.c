@@ -1,5 +1,5 @@
 #include "redismodule.h"
-#include "struct.h"
+#include "interval-set.h"
 #include "io.h"
 
 static RedisModuleType *IntervalSetType;

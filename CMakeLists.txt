@@ -6,11 +6,11 @@ set(CMAKE_C_STANDARD 99)
 add_library(
         redis-interval-module
         SHARED
-        src/struct.h
-        src/struct.c
+        src/interval-set.h
+        src/interval-set.c
         src/redis-interval-module.c
         src/interval.h
         src/interval.c
         src/io.h
         src/io.c
-        src/interval-red-black-tree.c)
+        src/interval-red-black-tree.c src/hashmap.c)

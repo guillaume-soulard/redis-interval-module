@@ -53,6 +53,9 @@ Interval *parseInterval(RedisModuleString *intervalString) {
     if (lowerBound > upperBound) {
         return NULL;
     }
+    if (lowerBound == upperBound && (includeUpperBound == 0 || includeLowerBound == 0)) {
+        return NULL;
+    }
     return createInterval(includeLowerBound, lowerBound, upperBound, includeUpperBound);
 }
 

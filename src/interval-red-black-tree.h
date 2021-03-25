@@ -23,7 +23,7 @@ int isLeaf(Node *n);
 Node *leftRotate(Node *node);
 Node *rightRotate(Node *node);
 void checkNode(Node *node);
-void insertNode(double val, Node **root, char *member, Interval *interval);
+Node *insertNode(double val, Node **root, char *member, Interval *interval);
 void checkForCase2(Node *toDelete, int delete, int fromDirection, Node **root);
 void deleteNode(double val, Node **root);
 void checkBlack(Node *temp, int c);

@@ -276,14 +276,14 @@ void checkNode(Node *node) {
 }
 
 // To insert a node in the existing tree
-void insertNode(double val, Node **root, char *member, Interval *interval) {
+Node *insertNode(double val, Node **root, char *member, Interval *interval) {
     Node *buffRoot = *root;
     Node *insertedNode;
     if (*root == NULL) {
         insertedNode = newNode(val, NULL, member, interval);
         *root = insertedNode;
         (*root)->color = 0;
-        return;
+        return insertedNode;
     }
     while (buffRoot) {
         if (buffRoot->val > val) {
@@ -324,6 +324,7 @@ void insertNode(double val, Node **root, char *member, Interval *interval) {
         }
     }
     updateParentBounds(insertedNode);
+    return insertedNode;
 }
 
 void checkForCase2(Node *toDelete, int delete, int fromDirection, Node **root) {

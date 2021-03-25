@@ -1,18 +1,13 @@
-#ifndef STRUCT_H
-#define STRUCT_H
+#ifndef INTERVAL_SET_H
+#define INTERVAL_SET_H
 
 #include "interval.h"
 #include "interval-red-black-tree.h"
-
-typedef struct HashTable {
-    size_t len;
-    size_t capacity;
-    Node **array;
-} HashTable;
+#include "hashmap.h"
 
 typedef struct IntervalSet {
     Node *tree;
-    HashTable *hash;
+    HashMap *hash;
 } IntervalSet;
 
 IntervalSet *createIntervalSet();
