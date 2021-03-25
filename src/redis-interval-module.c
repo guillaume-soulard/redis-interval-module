@@ -104,6 +104,28 @@ int iOverlapsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     }
 }
 
+int iRemCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+    RedisModule_AutoMemory(ctx);
+    if (argc != 3) {
+        return RedisModule_WrongArity(ctx);
+    }
+    RedisModuleString *keyName = argv[1];
+    RedisModuleKey *key = RedisModule_OpenKey(ctx, keyName, REDISMODULE_READ);
+    int type = RedisModule_KeyType(key);
+    if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != IntervalSetType) {
+        return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
+    } else {
+        IntervalSet *intervalSet;
+        if (type == REDISMODULE_KEYTYPE_EMPTY) {
+            return RedisModule_ReplyWithLongLong(ctx, 0);
+        } else {
+            intervalSet = RedisModule_ModuleTypeGetValue(key);
+            char *member = RedisModule_Strdup(RedisModule_StringPtrLen(argv[2], NULL));
+            return RedisModule_ReplyWithLongLong(ctx, removeInterval(intervalSet, member));
+        }
+    }
+}
+
 int RedisModule_OnLoad(RedisModuleCtx *ctx) {
     if (RedisModule_Init(ctx, "interval", 1, REDISMODULE_APIVER_1) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
@@ -122,6 +144,9 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx) {
         return REDISMODULE_ERR;
     }
     if (RedisModule_CreateCommand(ctx, "iadd", iAddCommand, "write", 1, 1, 1) == REDISMODULE_ERR) {
+        return REDISMODULE_ERR;
+    }
+    if (RedisModule_CreateCommand(ctx, "irem", iRemCommand, "write", 1, 1, 1) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
     }
     if (RedisModule_CreateCommand(ctx, "icard", iCardCommand, "readonly", 1, 1, 1) == REDISMODULE_ERR) {

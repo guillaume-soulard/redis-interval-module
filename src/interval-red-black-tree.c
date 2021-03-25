@@ -20,14 +20,6 @@ Node *newNode(double val, Node *par, char *member, Interval *interval) {
     return create;
 }
 
-// Check if the node is the leaf
-int isLeaf(Node *n) {
-    if (n->left == NULL && n->right == NULL) {
-        return 1;
-    }
-    return 0;
-}
-
 double max(double d1, double d2, double d3) {
     double result = d1;
     if (result < d2) {
@@ -536,35 +528,7 @@ void checkForCase2(Node *toDelete, int delete, int fromDirection, Node **root) {
 }
 
 // To delete a node from the tree
-void deleteNode(double val, Node **root) {
-    Node *buffRoot = *root;
-
-    // Search for the element in the tree
-    while (1) {
-        if (val == buffRoot->val) {
-            // Node Found
-            break;
-        }
-
-        if (val > buffRoot->val) {
-            if (buffRoot->right != NULL) {
-                buffRoot = buffRoot->right;
-            } else {
-                printf("Node Not Found!!!");
-                return;
-            }
-        } else {
-            if (buffRoot->left != NULL) {
-                buffRoot = buffRoot->left;
-            } else {
-                printf("Node Not Found!!!");
-                return;
-            }
-        }
-    }
-
-    Node *toDelete = buffRoot;
-
+void deleteNode(Node **root, Node *toDelete) {
     // Look for the leftmost of right node or right most of left node
     if (toDelete->left != NULL) {
         toDelete = toDelete->left;
@@ -577,15 +541,10 @@ void deleteNode(double val, Node **root) {
             toDelete = toDelete->left;
         }
     }
-
     if (toDelete == *root) {
         *root = NULL;
         return;
     }
-
-    // Swap the values
-    buffRoot->val = toDelete->val;
-    toDelete->val = val;
 
     // Checking for case 1
     if (toDelete->color == 1 ||

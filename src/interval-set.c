@@ -12,8 +12,23 @@ IntervalSet *createIntervalSet() {
 }
 
 int add(IntervalSet *intervalSet, char *member, Interval *interval) {
+    Node *existingNode = get(intervalSet->hash, member);
+    if (existingNode != NULL) {
+        delete(intervalSet->hash, member);
+        deleteNode(&intervalSet->tree, existingNode);
+    }
     Node *newNode = insertNode(interval->lowerBound, &intervalSet->tree, member, interval);
     return put(intervalSet->hash, member, newNode);
+}
+
+int removeInterval(IntervalSet *intervalSet, char *member) {
+    Node *existingNode = get(intervalSet->hash, member);
+    if (existingNode != NULL) {
+        deleteNode(&intervalSet->tree, existingNode);
+        delete(intervalSet->hash, member);
+        return 1;
+    }
+    return 0;
 }
 
 void searchValue(RedisModuleCtx *ctx, IntervalSet *intervalSet, double valueToSearch) {

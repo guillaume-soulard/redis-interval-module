@@ -20,7 +20,7 @@ typedef struct HashMap {
 HashMap *createHashMap();
 void freeHashMap(HashMap *hashMap);
 int put(HashMap *hashMap, char *key, Node *value);
-Node *get(HashMap *hashMap, char *key, Node *value);
-int delete(HashMap *hashMap, char *key);
+Node *get(HashMap *hashMap, char *key);
+void delete(HashMap *hashMap, char *key);
 
 #endif

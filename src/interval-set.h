@@ -14,4 +14,5 @@ IntervalSet *createIntervalSet();
 int add(IntervalSet *intervalSet, char *value, Interval *interval);
 void searchValue(RedisModuleCtx *ctx, IntervalSet *intervalSet, double valueToSearch);
 void searchInterval(RedisModuleCtx *ctx, IntervalSet *intervalSet, Interval *intervalToSearch);
+int removeInterval(IntervalSet *intervalSet, char *member);
 #endif

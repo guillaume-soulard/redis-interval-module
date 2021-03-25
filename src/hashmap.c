@@ -75,11 +75,8 @@ void incrementalRehash(HashMap *hashMap) {
 
 int put(HashMap *hashMap, char *key, Node *value) {
     size_t hashIndex = getHashCode(hashMap->arrays[hashMap->primaryIndex]->capacity, key);
-    Node *existingValue = get(hashMap, key, value);
-    if (existingValue == NULL) {
-        hashMap->arrays[hashMap->primaryIndex]->array[hashIndex] = value;
-        hashMap->len++;
-    } else if (strcmp(existingValue->member, key) != 0 && hashMap->rehashing == 0) {
+    Node *existingValue = get(hashMap, key);
+    if (existingValue != NULL && strcmp(existingValue->member, key) != 0 && hashMap->rehashing == 0) {
         hashMap->arrays[hashMap->secondaryIndex] = initHashMapArray(
                 hashMap->arrays[hashMap->primaryIndex]->capacity * 2);
         size_t hashSecondaryIndex = getHashCode(hashMap->arrays[hashMap->secondaryIndex]->capacity, key);
@@ -89,7 +86,7 @@ int put(HashMap *hashMap, char *key, Node *value) {
         hashMap->primaryIndex = 1;
         hashMap->secondaryIndex = 0;
         hashMap->reHashIndex = 0;
-    } else if (strcmp(existingValue->member, key) != 0 && hashMap->rehashing == 1) {
+    } else if (existingValue != NULL && strcmp(existingValue->member, key) != 0 && hashMap->rehashing == 1) {
         // error
         return -1;
     } else {
@@ -100,11 +97,40 @@ int put(HashMap *hashMap, char *key, Node *value) {
     return 1;
 }
 
-Node *get(HashMap *hashMap, char *key, Node *value) {
-    size_t hashIndex = getHashCode(hashMap->arrays[hashMap->primaryIndex]->capacity, key);
-    return hashMap->arrays[hashMap->primaryIndex]->array[hashIndex];
+Node *get(HashMap *hashMap, char *key) {
+    if (hashMap->rehashing) {
+        size_t hashInPrimaryIndex = getHashCode(hashMap->arrays[hashMap->primaryIndex]->capacity, key);
+        Node *nodeInPrimaryIndex = hashMap->arrays[hashMap->primaryIndex]->array[hashInPrimaryIndex];
+        if (nodeInPrimaryIndex == NULL) {
+            size_t hashInSecondaryIndex = getHashCode(hashMap->arrays[hashMap->secondaryIndex]->capacity, key);
+            return hashMap->arrays[hashMap->secondaryIndex]->array[hashInSecondaryIndex];
+        }
+        return nodeInPrimaryIndex;
+    } else {
+        size_t hashIndex = getHashCode(hashMap->arrays[hashMap->primaryIndex]->capacity, key);
+        return hashMap->arrays[hashMap->primaryIndex]->array[hashIndex];
+    }
 }
 
-int delete(HashMap *hashMap, char *key) {
-    return 0;
+void delete(HashMap *hashMap, char *key) {
+    Node *toDelete;
+    if (hashMap->rehashing) {
+        size_t hashInPrimaryIndex = getHashCode(hashMap->arrays[hashMap->primaryIndex]->capacity, key);
+        Node *nodeInPrimaryIndex = hashMap->arrays[hashMap->primaryIndex]->array[hashInPrimaryIndex];
+        if (nodeInPrimaryIndex == NULL) {
+            size_t hashInSecondaryIndex = getHashCode(hashMap->arrays[hashMap->secondaryIndex]->capacity, key);
+            toDelete = hashMap->arrays[hashMap->secondaryIndex]->array[hashInSecondaryIndex];
+            hashMap->arrays[hashMap->secondaryIndex]->array[hashInSecondaryIndex] = NULL;
+        } else {
+            toDelete = hashMap->arrays[hashMap->primaryIndex]->array[hashInPrimaryIndex];
+            hashMap->arrays[hashMap->primaryIndex]->array[hashInPrimaryIndex] = NULL;
+        }
+    } else {
+        size_t hashIndex = getHashCode(hashMap->arrays[hashMap->primaryIndex]->capacity, key);
+        toDelete = hashMap->arrays[hashMap->primaryIndex]->array[hashIndex];
+        hashMap->arrays[hashMap->primaryIndex]->array[hashIndex] = NULL;
+    }
+    if (toDelete != NULL) {
+        hashMap->len--;
+    }
 }
