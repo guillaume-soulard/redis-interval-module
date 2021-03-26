@@ -18,6 +18,9 @@ HashMapArray *initHashMapArray(size_t capacity) {
     HashMapArray *array = RedisModule_Alloc(sizeof (HashMapArray));
     array->capacity = capacity;
     array->array = RedisModule_Alloc(capacity * sizeof (Node));
+    for (int i = 0; i < array->capacity; i++) {
+        array->array[i] = NULL;
+    }
     return array;
 }
 
@@ -98,17 +101,24 @@ int put(HashMap *hashMap, char *key, Node *value) {
 }
 
 Node *get(HashMap *hashMap, char *key) {
+    Node *foundNode;
     if (hashMap->rehashing) {
         size_t hashInPrimaryIndex = getHashCode(hashMap->arrays[hashMap->primaryIndex]->capacity, key);
         Node *nodeInPrimaryIndex = hashMap->arrays[hashMap->primaryIndex]->array[hashInPrimaryIndex];
         if (nodeInPrimaryIndex == NULL) {
             size_t hashInSecondaryIndex = getHashCode(hashMap->arrays[hashMap->secondaryIndex]->capacity, key);
-            return hashMap->arrays[hashMap->secondaryIndex]->array[hashInSecondaryIndex];
+            foundNode = hashMap->arrays[hashMap->secondaryIndex]->array[hashInSecondaryIndex];
+        } else {
+            foundNode = nodeInPrimaryIndex;
         }
-        return nodeInPrimaryIndex;
     } else {
         size_t hashIndex = getHashCode(hashMap->arrays[hashMap->primaryIndex]->capacity, key);
-        return hashMap->arrays[hashMap->primaryIndex]->array[hashIndex];
+        foundNode = hashMap->arrays[hashMap->primaryIndex]->array[hashIndex];
+    }
+    if (foundNode != NULL && foundNode->member != NULL && strcmp(foundNode->member, key) == 0) {
+        return foundNode;
+    } else {
+        return NULL;
     }
 }
 
@@ -120,17 +130,23 @@ void delete(HashMap *hashMap, char *key) {
         if (nodeInPrimaryIndex == NULL) {
             size_t hashInSecondaryIndex = getHashCode(hashMap->arrays[hashMap->secondaryIndex]->capacity, key);
             toDelete = hashMap->arrays[hashMap->secondaryIndex]->array[hashInSecondaryIndex];
-            hashMap->arrays[hashMap->secondaryIndex]->array[hashInSecondaryIndex] = NULL;
+            if (toDelete != NULL && toDelete->member != NULL && strcmp(toDelete->member, key) == 0) {
+                hashMap->arrays[hashMap->secondaryIndex]->array[hashInSecondaryIndex] = NULL;
+            }
         } else {
             toDelete = hashMap->arrays[hashMap->primaryIndex]->array[hashInPrimaryIndex];
-            hashMap->arrays[hashMap->primaryIndex]->array[hashInPrimaryIndex] = NULL;
+            if (toDelete != NULL && toDelete->member != NULL && strcmp(toDelete->member, key) == 0) {
+                hashMap->arrays[hashMap->primaryIndex]->array[hashInPrimaryIndex] = NULL;
+            }
         }
     } else {
         size_t hashIndex = getHashCode(hashMap->arrays[hashMap->primaryIndex]->capacity, key);
         toDelete = hashMap->arrays[hashMap->primaryIndex]->array[hashIndex];
-        hashMap->arrays[hashMap->primaryIndex]->array[hashIndex] = NULL;
+        if (toDelete != NULL && toDelete->member != NULL && strcmp(toDelete->member, key) == 0) {
+            hashMap->arrays[hashMap->primaryIndex]->array[hashIndex] = NULL;
+        }
     }
-    if (toDelete != NULL) {
+    if (toDelete != NULL && toDelete->member != NULL && strcmp(toDelete->member, key) == 0) {
         hashMap->len--;
     }
 }
