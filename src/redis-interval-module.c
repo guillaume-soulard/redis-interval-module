@@ -1,6 +1,7 @@
 #include "redismodule.h"
 #include "interval-set.h"
 #include "io.h"
+#include <string.h>
 
 static RedisModuleType *IntervalSetType;
 
@@ -126,6 +127,51 @@ int iRemCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     }
 }
 
+int iScanCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+    RedisModule_AutoMemory(ctx);
+    if (argc < 5) {
+        return RedisModule_WrongArity(ctx);
+    }
+    RedisModuleString *keyName = argv[1];
+    RedisModuleKey *key = RedisModule_OpenKey(ctx, keyName, REDISMODULE_READ);
+    int type = RedisModule_KeyType(key);
+    if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != IntervalSetType) {
+        return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
+    } else {
+        IntervalSet *intervalSet;
+        if (type == REDISMODULE_KEYTYPE_EMPTY) {
+            RedisModule_ReplyWithArray(ctx, REDISMODULE_POSTPONED_ARRAY_LEN);
+            RedisModule_ReplyWithLongLong(ctx, 0);
+            RedisModule_ReplyWithEmptyArray(ctx);
+            RedisModule_ReplySetArrayLength(ctx, 2);
+        } else {
+            intervalSet = RedisModule_ModuleTypeGetValue(key);
+            long long cursor;
+            RedisModule_StringToLongLong(argv[2], &cursor);
+            const char *match;
+            long long count = 10;
+            if (strcasecmp(RedisModule_StringPtrLen(argv[3], NULL), "match") == 0) {
+                match = RedisModule_StringPtrLen(argv[4], NULL);
+            } else {
+                return RedisModule_ReplyWithError(ctx, "missing match");
+            }
+            if (argc > 5 && strcasecmp(RedisModule_StringPtrLen(argv[5], NULL), "count") == 0) {
+                RedisModule_StringToLongLong(argv[6], &count);
+            }
+            if (cursor < 0) {
+                return RedisModule_ReplyWithError(ctx, "invalid cursor");
+            }
+            if (count < 0) {
+                return RedisModule_ReplyWithError(ctx, "invalid count");
+            }
+            RedisModule_ReplyWithArray(ctx, REDISMODULE_POSTPONED_ARRAY_LEN);
+            scanIntervalSet(ctx, intervalSet, cursor, match, count);
+            RedisModule_ReplySetArrayLength(ctx, 2);
+        }
+        return REDISMODULE_OK;
+    }
+}
+
 int RedisModule_OnLoad(RedisModuleCtx *ctx) {
     if (RedisModule_Init(ctx, "interval", 1, REDISMODULE_APIVER_1) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
@@ -139,7 +185,7 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx) {
             .free = IntervalSetTypeFree
     };
 
-    IntervalSetType = RedisModule_CreateDataType(ctx,"intertype",0,&tm);
+    IntervalSetType = RedisModule_CreateDataType(ctx, "intertype", 0, &tm);
     if (IntervalSetType == NULL) {
         return REDISMODULE_ERR;
     }
@@ -156,6 +202,9 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx) {
         return REDISMODULE_ERR;
     }
     if (RedisModule_CreateCommand(ctx, "ioverlaps", iOverlapsCommand, "readonly", 1, 1, 1) == REDISMODULE_ERR) {
+        return REDISMODULE_ERR;
+    }
+    if (RedisModule_CreateCommand(ctx, "iscan", iScanCommand, "readonly", 1, 1, 1) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
     }
     return REDISMODULE_OK;

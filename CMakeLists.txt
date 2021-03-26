@@ -13,4 +13,4 @@ add_library(
         src/interval.c
         src/io.h
         src/io.c
-        src/interval-red-black-tree.c src/hashmap.c)
+        src/interval-red-black-tree.c src/hashmap.c src/util.c src/util.h)

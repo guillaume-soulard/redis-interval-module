@@ -44,3 +44,11 @@ void searchInterval(RedisModuleCtx *ctx, IntervalSet *intervalSet, Interval *int
     findOverlaps(intervalSet->tree, intervalToSearch, ctx, &len);
     RedisModule_ReplySetArrayLength(ctx, len);
 }
+
+void scanIntervalSet(RedisModuleCtx *ctx, IntervalSet *intervalSet, long long cursor, char *match, long long count) {
+    size_t len = 0;
+    long long stopCursor = scanHash(ctx, intervalSet->hash, cursor, match, count, &len);
+    RedisModule_ReplyWithLongLong(ctx, stopCursor);
+    RedisModule_ReplyWithArray(ctx,REDISMODULE_POSTPONED_ARRAY_LEN);
+    RedisModule_ReplySetArrayLength(ctx, len);
+}

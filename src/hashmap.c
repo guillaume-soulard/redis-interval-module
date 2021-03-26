@@ -1,6 +1,7 @@
 #include "hashmap.h"
 #include "redismodule.h"
 #include "string.h"
+#include "util.h"
 
 size_t getHashCode(int hashCapacity, char *key);
 HashMapArray *initHashMapArray(size_t capacity);
@@ -78,7 +79,7 @@ void incrementalRehash(HashMap *hashMap) {
 
 int put(HashMap *hashMap, char *key, Node *value) {
     size_t hashIndex = getHashCode(hashMap->arrays[hashMap->primaryIndex]->capacity, key);
-    Node *existingValue = get(hashMap, key);
+    Node *existingValue = hashMap->arrays[hashMap->primaryIndex]->array[hashIndex];
     if (existingValue != NULL && strcmp(existingValue->member, key) != 0 && hashMap->rehashing == 0) {
         hashMap->arrays[hashMap->secondaryIndex] = initHashMapArray(
                 hashMap->arrays[hashMap->primaryIndex]->capacity * 2);
@@ -148,5 +149,32 @@ void delete(HashMap *hashMap, char *key) {
     }
     if (toDelete != NULL && toDelete->member != NULL && strcmp(toDelete->member, key) == 0) {
         hashMap->len--;
+    }
+}
+
+void outputIfMatch(RedisModuleCtx *ctx, Node *node, const char *match, size_t *len) {
+    if (node != NULL) {
+        if (stringMatchLen(match, strlen(match), node->member, strlen(node->member), 0)) {
+            outputInterval(ctx, node->member, node->interval);
+            (*len)++;
+        }
+    }
+}
+
+long long scanHash(RedisModuleCtx *ctx, HashMap *hashMap, long long int cursor, char *match, long long int count, size_t *len) {
+    long long iteration = 0;
+    int read = 1;
+    while (read && iteration <= count && *len <= count) {
+        read = 0;
+        if (hashMap->arrays[0] != NULL && cursor < hashMap->arrays[0]->capacity) {
+            outputIfMatch(ctx, hashMap->arrays[0]->array[cursor], match, len);
+            read = 1;
+        }
+        if (hashMap->arrays[1] != NULL && cursor < hashMap->arrays[1]->capacity) {
+            outputIfMatch(ctx, hashMap->arrays[1]->array[cursor], match, len);
+            read = 1;
+        }
+        iteration++;
+        cursor++;
     }
 }
