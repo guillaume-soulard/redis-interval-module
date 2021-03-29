@@ -4,9 +4,13 @@
 #include "util.h"
 #include "linked-list.h"
 
+#define initialHashMapCapacity 10
+#define hashMapGrowthFactor 2
+#define hashMapResizeCapacity 100
+#define maxItemsToLookup 100000
+
 size_t getHashCode(int hashCapacity, char *key);
 HashMapArray *initHashMapArray(size_t capacity);
-void freeHashMapArray(HashMapArray *array);
 
 size_t getHashCode(int hashCapacity, char *key) {
     unsigned int hash = 0;
@@ -17,9 +21,9 @@ size_t getHashCode(int hashCapacity, char *key) {
 }
 
 HashMapArray *initHashMapArray(size_t capacity) {
-    HashMapArray *array = RedisModule_Alloc(sizeof (HashMapArray));
+    HashMapArray *array = RedisModule_Alloc(sizeof(HashMapArray));
     array->capacity = capacity;
-    array->array = RedisModule_Alloc(capacity * sizeof (Node));
+    array->array = RedisModule_Alloc(capacity * sizeof(Node));
     for (int i = 0; i < array->capacity; i++) {
         array->array[i] = NULL;
     }
@@ -27,130 +31,142 @@ HashMapArray *initHashMapArray(size_t capacity) {
 }
 
 HashMap *createHashMap() {
-    HashMap *hashMap = RedisModule_Alloc(sizeof (HashMap));
+    HashMap *hashMap = RedisModule_Alloc(sizeof(HashMap));
     hashMap->len = 0;
-    hashMap->arrays = RedisModule_Alloc(2 * sizeof (HashMapArray));
-    hashMap->arrays[0] = initHashMapArray(10);
-    hashMap->arrays[1] = NULL;
-    hashMap->primaryIndex = 0;
-    hashMap->secondaryIndex = 1;
+    hashMap->arraysCapacity = hashMapResizeCapacity;
+    hashMap->arrays = RedisModule_Alloc(hashMap->arraysCapacity * sizeof(HashMapArray));
+    for (int i = 0; i <= hashMap->arraysCapacity; i++) {
+        hashMap->arrays[i] = NULL;
+    }
+    hashMap->arrays[0] = initHashMapArray(initialHashMapCapacity);
+    hashMap->arraysLen = 1;
+    hashMap->primaryArray = 0;
+    hashMap->reHashArrayIndex = 0;
+    hashMap->reHashItemIndex = 0;
     return hashMap;
 }
 
-void freeHashMapArray(HashMapArray *array) {
-    if (array != NULL) {
-        for (int i = 0; i < array->capacity; i++) {
-            if (array->array[i] != NULL) {
-                array->array[i] = NULL;
+void freeHashMapArray(HashMap *hashMap, size_t arrayIndexToFree) {
+    if (hashMap->arrays[arrayIndexToFree] != NULL) {
+        for (int i = 0; i < hashMap->arrays[arrayIndexToFree]->capacity; i++) {
+            if (hashMap->arrays[arrayIndexToFree]->array[i] != NULL) {
+                hashMap->arrays[arrayIndexToFree]->array[i] = NULL;
             }
         }
-        RedisModule_Free(array);
+        RedisModule_Free(hashMap->arrays[arrayIndexToFree]->array);
+        RedisModule_Free(hashMap->arrays[arrayIndexToFree]);
+        hashMap->arrays[arrayIndexToFree] = NULL;
+        hashMap->arraysLen--;
     }
 }
 
 void freeHashMap(HashMap *hashMap) {
-    freeHashMapArray(hashMap->arrays[0]);
-    freeHashMapArray(hashMap->arrays[1]);
+    for (int i = 0; i < hashMap->arraysCapacity; i++) {
+        freeHashMapArray(hashMap, i);
+    }
     RedisModule_Free(hashMap->arrays);
 }
 
+void newHashMapPrimaryArray(HashMap *hashMap) {
+    for (int i = 0; i < hashMap->arraysCapacity; i++) {
+        if (hashMap->arrays[i] == NULL) {
+            hashMap->arrays[i] = initHashMapArray(hashMap->arrays[hashMap->primaryArray]->capacity * hashMapGrowthFactor);
+            hashMap->primaryArray = i;
+            hashMap->arraysLen++;
+            break;
+        }
+    }
+}
+
+int putInPrimary(HashMap *hashMap, char *key, Node *value) {
+    size_t hashIndex = getHashCode(hashMap->arrays[hashMap->primaryArray]->capacity, key);
+    Node *existingValue = hashMap->arrays[hashMap->primaryArray]->array[hashIndex];
+    if (existingValue != NULL && strcmp(existingValue->member, key) != 0) {
+        newHashMapPrimaryArray(hashMap);
+        putInPrimary(hashMap, key, value);
+    } else {
+        hashMap->arrays[hashMap->primaryArray]->array[hashIndex] = value;
+    }
+    return 1;
+}
+
+void moveItemToPrimaryArray(HashMap *hashMap, size_t *itemLookup) {
+    while (hashMap->reHashItemIndex < hashMap->len && *itemLookup <= maxItemsToLookup) {
+        (*itemLookup)++;
+        Node *item = hashMap->arrays[hashMap->reHashArrayIndex]->array[hashMap->reHashItemIndex];
+        if (item != NULL) {
+            putInPrimary(hashMap, item->member, item);
+            hashMap->arrays[hashMap->reHashArrayIndex]->array[hashMap->reHashItemIndex] = NULL;
+        }
+        hashMap->reHashItemIndex++;
+    }
+    if (hashMap->reHashItemIndex >= hashMap->arrays[hashMap->reHashArrayIndex]->capacity) {
+        freeHashMapArray(hashMap, hashMap->reHashArrayIndex);
+    }
+}
+
 void incrementalRehash(HashMap *hashMap) {
-    if (hashMap->rehashing) {
-        size_t itemLookup = 0;
-        while (hashMap->reHashIndex < hashMap->len && itemLookup <= 100000) {
-            itemLookup++;
-            Node *item = hashMap->arrays[hashMap->secondaryIndex]->array[hashMap->reHashIndex];
-            if (item != NULL) {
-                size_t newHashIndex = getHashCode(hashMap->arrays[hashMap->primaryIndex]->capacity, item->member);
-                hashMap->arrays[hashMap->primaryIndex]->array[newHashIndex] = item;
-                hashMap->arrays[hashMap->secondaryIndex]->array[hashMap->reHashIndex] = NULL;
-            }
-            hashMap->reHashIndex++;
+    size_t itemLookup = 0;
+    while (hashMap->arraysLen > 1 && hashMap->reHashArrayIndex < hashMap->arraysCapacity && itemLookup <= maxItemsToLookup) {
+        if (hashMap->arrays[hashMap->reHashArrayIndex] != NULL && hashMap->reHashArrayIndex != hashMap->primaryArray) {
+            moveItemToPrimaryArray(hashMap, &itemLookup);
         }
-        if (hashMap->reHashIndex >= hashMap->len) {
-            freeHashMapArray(hashMap->arrays[hashMap->secondaryIndex]);
-            hashMap->arrays[hashMap->secondaryIndex] = hashMap->arrays[hashMap->primaryIndex];
-            hashMap->arrays[hashMap->primaryIndex] = NULL;
-            hashMap->rehashing = 0;
-            hashMap->primaryIndex = 0;
-            hashMap->secondaryIndex = 1;
-        }
+        hashMap->reHashArrayIndex++;
     }
 }
 
 int put(HashMap *hashMap, char *key, Node *value) {
-    size_t hashIndex = getHashCode(hashMap->arrays[hashMap->primaryIndex]->capacity, key);
-    Node *existingValue = hashMap->arrays[hashMap->primaryIndex]->array[hashIndex];
-    if (existingValue != NULL && strcmp(existingValue->member, key) != 0 && hashMap->rehashing == 0) {
-        hashMap->arrays[hashMap->secondaryIndex] = initHashMapArray(
-                hashMap->arrays[hashMap->primaryIndex]->capacity * 2);
-        size_t hashSecondaryIndex = getHashCode(hashMap->arrays[hashMap->secondaryIndex]->capacity, key);
-        hashMap->arrays[hashMap->secondaryIndex]->array[hashSecondaryIndex] = value;
-        hashMap->len++;
-        hashMap->rehashing = 1;
-        hashMap->primaryIndex = 1;
-        hashMap->secondaryIndex = 0;
-        hashMap->reHashIndex = 0;
-    } else if (existingValue != NULL && strcmp(existingValue->member, key) != 0 && hashMap->rehashing == 1) {
-        // error
-        return -1;
-    } else {
-        hashMap->arrays[hashMap->primaryIndex]->array[hashIndex] = value;
-        hashMap->len++;
-    }
+    putInPrimary(hashMap, key, value);
+    hashMap->len++;
     incrementalRehash(hashMap);
     return 1;
 }
 
-Node *get(HashMap *hashMap, char *key) {
-    Node *foundNode;
-    if (hashMap->rehashing) {
-        size_t hashInPrimaryIndex = getHashCode(hashMap->arrays[hashMap->primaryIndex]->capacity, key);
-        Node *nodeInPrimaryIndex = hashMap->arrays[hashMap->primaryIndex]->array[hashInPrimaryIndex];
-        if (nodeInPrimaryIndex == NULL) {
-            size_t hashInSecondaryIndex = getHashCode(hashMap->arrays[hashMap->secondaryIndex]->capacity, key);
-            foundNode = hashMap->arrays[hashMap->secondaryIndex]->array[hashInSecondaryIndex];
+Node *getOnArray(HashMapArray *array, char *key) {
+    if (array != NULL) {
+        size_t hashIndex = getHashCode(array->capacity, key);
+        Node *foundNode = array->array[hashIndex];
+        if (foundNode != NULL && foundNode->member != NULL && strcmp(foundNode->member, key) == 0) {
+            return foundNode;
         } else {
-            foundNode = nodeInPrimaryIndex;
+            return NULL;
         }
-    } else {
-        size_t hashIndex = getHashCode(hashMap->arrays[hashMap->primaryIndex]->capacity, key);
-        foundNode = hashMap->arrays[hashMap->primaryIndex]->array[hashIndex];
     }
-    if (foundNode != NULL && foundNode->member != NULL && strcmp(foundNode->member, key) == 0) {
+    return NULL;
+}
+
+Node *get(HashMap *hashMap, char *key) {
+    incrementalRehash(hashMap);
+    if (hashMap->arraysLen > 1) {
+        Node *foundNode;
+        for (int i = 0; i < hashMap->arraysCapacity; i++) {
+            foundNode = getOnArray(hashMap->arrays[i], key);
+            if (foundNode != NULL) {
+                break;
+            }
+        }
         return foundNode;
     } else {
-        return NULL;
+        return getOnArray(hashMap->arrays[hashMap->primaryArray], key);
     }
 }
 
 void delete(HashMap *hashMap, char *key) {
     Node *toDelete;
-    if (hashMap->rehashing) {
-        size_t hashInPrimaryIndex = getHashCode(hashMap->arrays[hashMap->primaryIndex]->capacity, key);
-        Node *nodeInPrimaryIndex = hashMap->arrays[hashMap->primaryIndex]->array[hashInPrimaryIndex];
-        if (nodeInPrimaryIndex == NULL) {
-            size_t hashInSecondaryIndex = getHashCode(hashMap->arrays[hashMap->secondaryIndex]->capacity, key);
-            toDelete = hashMap->arrays[hashMap->secondaryIndex]->array[hashInSecondaryIndex];
-            if (toDelete != NULL && toDelete->member != NULL && strcmp(toDelete->member, key) == 0) {
-                hashMap->arrays[hashMap->secondaryIndex]->array[hashInSecondaryIndex] = NULL;
-            }
-        } else {
-            toDelete = hashMap->arrays[hashMap->primaryIndex]->array[hashInPrimaryIndex];
-            if (toDelete != NULL && toDelete->member != NULL && strcmp(toDelete->member, key) == 0) {
-                hashMap->arrays[hashMap->primaryIndex]->array[hashInPrimaryIndex] = NULL;
+    if (hashMap->arraysLen > 1) {
+        for (int i = 0; i < hashMap->arraysCapacity; i++) {
+            toDelete = getOnArray(hashMap->arrays[i], key);
+            if (toDelete != NULL) {
+                break;
             }
         }
     } else {
-        size_t hashIndex = getHashCode(hashMap->arrays[hashMap->primaryIndex]->capacity, key);
-        toDelete = hashMap->arrays[hashMap->primaryIndex]->array[hashIndex];
-        if (toDelete != NULL && toDelete->member != NULL && strcmp(toDelete->member, key) == 0) {
-            hashMap->arrays[hashMap->primaryIndex]->array[hashIndex] = NULL;
-        }
+        toDelete = getOnArray(hashMap->arrays[hashMap->primaryArray], key);
     }
     if (toDelete != NULL && toDelete->member != NULL && strcmp(toDelete->member, key) == 0) {
         hashMap->len--;
     }
+    incrementalRehash(hashMap);
 }
 
 void outputIfMatch(Node *node, const char *match, LinkedList *list) {
@@ -162,24 +178,21 @@ void outputIfMatch(Node *node, const char *match, LinkedList *list) {
 }
 
 LinkedList *scanHash(HashMap *hashMap, long long int *cursor, char *match, long long int count) {
+    incrementalRehash(hashMap);
     long long iteration = 0;
     int read = 1;
     LinkedList *list = newList();
     while (read && iteration <= count && list->len <= count) {
         read = 0;
-        if (hashMap->arrays[0] != NULL && *cursor < hashMap->arrays[0]->capacity) {
-            outputIfMatch(hashMap->arrays[0]->array[*cursor], match, list);
-            if (hashMap->arrays[0]->array[*cursor] != NULL) {
-                iteration++;
+        for (int i = 0; i < hashMap->reHashArrayIndex; i++) {
+            HashMapArray *array = hashMap->arrays[i];
+            if (array != NULL && *cursor < array->capacity) {
+                outputIfMatch(array->array[*cursor], match, list);
+                if (array->array[*cursor] != NULL) {
+                    iteration++;
+                }
+                read = 1;
             }
-            read = 1;
-        }
-        if (hashMap->arrays[1] != NULL && *cursor < hashMap->arrays[1]->capacity) {
-            outputIfMatch(hashMap->arrays[1]->array[*cursor], match, list);
-            if (hashMap->arrays[0]->array[*cursor] != NULL) {
-                iteration++;
-            }
-            read = 1;
         }
         (*cursor)++;
     }

@@ -12,10 +12,11 @@ typedef struct HashMapArray {
 typedef struct HashMap {
     size_t len;
     HashMapArray **arrays;
-    size_t primaryIndex;
-    size_t secondaryIndex;
-    int rehashing;
-    size_t reHashIndex;
+    size_t arraysLen;
+    size_t primaryArray;
+    size_t arraysCapacity;
+    size_t reHashItemIndex;
+    size_t reHashArrayIndex;
 } HashMap;
 
 HashMap *createHashMap();
