@@ -1,7 +1,7 @@
 #include "interval-set.h"
 #include "string.h"
 #include "interval-red-black-tree.h"
-
+#include "linked-list.h"
 
 IntervalSet *createIntervalSet() {
     IntervalSet *intervalSet = RedisModule_Alloc(sizeof(IntervalSet));
@@ -46,9 +46,13 @@ void searchInterval(RedisModuleCtx *ctx, IntervalSet *intervalSet, Interval *int
 }
 
 void scanIntervalSet(RedisModuleCtx *ctx, IntervalSet *intervalSet, long long cursor, char *match, long long count) {
-    size_t len = 0;
-    long long stopCursor = scanHash(ctx, intervalSet->hash, cursor, match, count, &len);
-    RedisModule_ReplyWithLongLong(ctx, stopCursor);
+    LinkedList *list = scanHash(intervalSet->hash, &cursor, match, count);
+    RedisModule_ReplyWithLongLong(ctx, cursor);
     RedisModule_ReplyWithArray(ctx,REDISMODULE_POSTPONED_ARRAY_LEN);
-    RedisModule_ReplySetArrayLength(ctx, len);
+    LinkedListNode *listNode = list->head;
+    while (listNode != NULL) {
+        outputInterval(ctx, listNode->item->member, listNode->item->interval);
+        listNode = listNode->next;
+    }
+    RedisModule_ReplySetArrayLength(ctx, list->len);
 }

@@ -2,6 +2,7 @@
 #define HASH_MAP_H
 
 #include "interval-red-black-tree.h"
+#include "linked-list.h"
 
 typedef struct HashMapArray {
     size_t capacity;
@@ -22,5 +23,5 @@ void freeHashMap(HashMap *hashMap);
 int put(HashMap *hashMap, char *key, Node *value);
 Node *get(HashMap *hashMap, char *key);
 void delete(HashMap *hashMap, char *key);
-long long scanHash(RedisModuleCtx *ctx, HashMap *hashMap, long long int cursor, char *match, long long int count, size_t *len);
+LinkedList *scanHash(HashMap *hashMap, long long int *cursor, char *match, long long int count);
 #endif

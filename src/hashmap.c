@@ -2,6 +2,7 @@
 #include "redismodule.h"
 #include "string.h"
 #include "util.h"
+#include "linked-list.h"
 
 size_t getHashCode(int hashCapacity, char *key);
 HashMapArray *initHashMapArray(size_t capacity);
@@ -152,29 +153,35 @@ void delete(HashMap *hashMap, char *key) {
     }
 }
 
-void outputIfMatch(RedisModuleCtx *ctx, Node *node, const char *match, size_t *len) {
+void outputIfMatch(Node *node, const char *match, LinkedList *list) {
     if (node != NULL) {
         if (stringMatchLen(match, strlen(match), node->member, strlen(node->member), 0)) {
-            outputInterval(ctx, node->member, node->interval);
-            (*len)++;
+            push(list, node);
         }
     }
 }
 
-long long scanHash(RedisModuleCtx *ctx, HashMap *hashMap, long long int cursor, char *match, long long int count, size_t *len) {
+LinkedList *scanHash(HashMap *hashMap, long long int *cursor, char *match, long long int count) {
     long long iteration = 0;
     int read = 1;
-    while (read && iteration <= count && *len <= count) {
+    LinkedList *list = newList();
+    while (read && iteration <= count && list->len <= count) {
         read = 0;
-        if (hashMap->arrays[0] != NULL && cursor < hashMap->arrays[0]->capacity) {
-            outputIfMatch(ctx, hashMap->arrays[0]->array[cursor], match, len);
+        if (hashMap->arrays[0] != NULL && *cursor < hashMap->arrays[0]->capacity) {
+            outputIfMatch(hashMap->arrays[0]->array[*cursor], match, list);
+            if (hashMap->arrays[0]->array[*cursor] != NULL) {
+                iteration++;
+            }
             read = 1;
         }
-        if (hashMap->arrays[1] != NULL && cursor < hashMap->arrays[1]->capacity) {
-            outputIfMatch(ctx, hashMap->arrays[1]->array[cursor], match, len);
+        if (hashMap->arrays[1] != NULL && *cursor < hashMap->arrays[1]->capacity) {
+            outputIfMatch(hashMap->arrays[1]->array[*cursor], match, list);
+            if (hashMap->arrays[0]->array[*cursor] != NULL) {
+                iteration++;
+            }
             read = 1;
         }
-        iteration++;
-        cursor++;
+        (*cursor)++;
     }
+    return list;
 }
