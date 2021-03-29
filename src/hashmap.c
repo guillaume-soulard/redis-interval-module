@@ -183,5 +183,8 @@ LinkedList *scanHash(HashMap *hashMap, long long int *cursor, char *match, long 
         }
         (*cursor)++;
     }
+    if (read == 0) {
+        *cursor = 0;
+    }
     return list;
 }
