@@ -129,7 +129,7 @@ int iRemCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
 
 int iScanCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     RedisModule_AutoMemory(ctx);
-    if (argc < 5) {
+    if (argc != 5 && argc != 7) {
         return RedisModule_WrongArity(ctx);
     }
     RedisModuleString *keyName = argv[1];
@@ -155,7 +155,7 @@ int iScanCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
             } else {
                 return RedisModule_ReplyWithError(ctx, "missing match");
             }
-            if (argc > 5 && strcasecmp(RedisModule_StringPtrLen(argv[5], NULL), "count") == 0) {
+            if (argc > 5 && strcasecmp(RedisModule_StringPtrLen(argv[5], NULL), "count") == 0 && argv[6] != NULL) {
                 RedisModule_StringToLongLong(argv[6], &count);
             }
             if (cursor < 0) {

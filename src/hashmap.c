@@ -182,9 +182,9 @@ LinkedList *scanHash(HashMap *hashMap, long long int *cursor, char *match, long 
     long long iteration = 0;
     int read = 1;
     LinkedList *list = newList();
-    while (read && iteration <= count && list->len <= count) {
+    while (read && iteration <= count && list->len < count) {
         read = 0;
-        for (int i = 0; i < hashMap->reHashArrayIndex; i++) {
+        for (int i = 0; i < hashMap->reHashArrayIndex && list->len < count; i++) {
             HashMapArray *array = hashMap->arrays[i];
             if (array != NULL && *cursor < array->capacity) {
                 outputIfMatch(array->array[*cursor], match, list);
