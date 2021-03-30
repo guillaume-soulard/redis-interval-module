@@ -380,7 +380,7 @@ void checkForCase2(Node *toDelete, int delete, int fromDirection, Node **root) {
                         toDelete->left->par = parent->right;
                     }
                     parent->right->right = toDelete->left;
-                    RedisModule_Free(toDelete);
+                    freeIntervalSetTreeNode(toDelete);
                 }
             } else {  // Sibling is right and child is also right. i.e. LEFT LEFT
                 // ROTATION
@@ -406,7 +406,7 @@ void checkForCase2(Node *toDelete, int delete, int fromDirection, Node **root) {
                         toDelete->right->par = parent->left;
                     }
                     parent->left->left = toDelete->left;
-                    RedisModule_Free(toDelete);
+                    freeIntervalSetTreeNode(toDelete);
                 }
             }
         } else {
@@ -439,7 +439,7 @@ void checkForCase2(Node *toDelete, int delete, int fromDirection, Node **root) {
                         toDelete->right->par = parent->left;
                     }
                     parent->left->left = toDelete->right;
-                    RedisModule_Free(toDelete);
+                    freeIntervalSetTreeNode(toDelete);
                 }
             } else {  // Sibling is left and child is also left. i.e. RIGHT RIGHT
                 // ROTATION
@@ -465,7 +465,7 @@ void checkForCase2(Node *toDelete, int delete, int fromDirection, Node **root) {
                         toDelete->left->par = parent->right;
                     }
                     parent->right->right = toDelete->left;
-                    RedisModule_Free(toDelete);
+                    freeIntervalSetTreeNode(toDelete);
                 }
             }
         }
@@ -633,8 +633,8 @@ void freeIntervalSetTreeNode(Node *node) {
         RedisModule_Free(node->interval);
         RedisModule_Free(node->member);
         node->par = NULL;
-        freeIntervalSetTreeNode(node->left);
-        freeIntervalSetTreeNode(node->right);
+        node->left = NULL;
+        node->right = NULL;
         RedisModule_Free(node);
     }
 }

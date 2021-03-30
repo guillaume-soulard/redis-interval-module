@@ -7,7 +7,7 @@ static RedisModuleType *IntervalSetType;
 
 int iAddCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     RedisModule_AutoMemory(ctx);
-    if (argc != 4) {
+    if (argc < 4 || argc % 2 != 0) {
         return RedisModule_WrongArity(ctx);
     }
     RedisModuleString *keyName = argv[1];
@@ -23,14 +23,21 @@ int iAddCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
         } else {
             intervalSet = RedisModule_ModuleTypeGetValue(key);
         }
-        Interval *interval = parseInterval(argv[2]);
-        if (interval == NULL) {
-            return RedisModule_ReplyWithError(ctx, "incorrect interval");
+        for (int i = 2; i < argc; i += 2) {
+            Interval *interval = parseInterval(argv[i]);
+            if (interval == NULL) {
+                return RedisModule_ReplyWithError(ctx, "incorrect interval");
+            }
+            RedisModule_Free(interval);
         }
-        char *member = RedisModule_Strdup(RedisModule_StringPtrLen(argv[3], NULL));
-        int response = add(intervalSet, member, interval);
+        int reply = 0;
+        for (int i = 2; i < argc; i += 2) {
+            Interval *interval = parseInterval(argv[i]);
+            char *member = RedisModule_Strdup(RedisModule_StringPtrLen(argv[i+1], NULL));
+            reply += add(intervalSet, member, interval);
+        }
         RedisModule_ReplicateVerbatim(ctx);
-        return RedisModule_ReplyWithLongLong(ctx, response);
+        return RedisModule_ReplyWithLongLong(ctx, reply);
     }
 }
 
@@ -107,7 +114,7 @@ int iOverlapsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
 
 int iRemCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     RedisModule_AutoMemory(ctx);
-    if (argc != 3) {
+    if (argc < 3) {
         return RedisModule_WrongArity(ctx);
     }
     RedisModuleString *keyName = argv[1];
@@ -121,8 +128,13 @@ int iRemCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
             return RedisModule_ReplyWithLongLong(ctx, 0);
         } else {
             intervalSet = RedisModule_ModuleTypeGetValue(key);
-            char *member = RedisModule_Strdup(RedisModule_StringPtrLen(argv[2], NULL));
-            return RedisModule_ReplyWithLongLong(ctx, removeInterval(intervalSet, member));
+            int reply = 0;
+            for (int i = 2; i < argc; i++) {
+                char *member = RedisModule_Strdup(RedisModule_StringPtrLen(argv[i], NULL));
+                reply += removeInterval(intervalSet, member);
+            }
+            RedisModule_ReplicateVerbatim(ctx);
+            return RedisModule_ReplyWithLongLong(ctx, reply);
         }
     }
 }

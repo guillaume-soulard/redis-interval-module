@@ -26,6 +26,7 @@ int removeInterval(IntervalSet *intervalSet, char *member) {
     if (existingNode != NULL) {
         deleteNode(&intervalSet->tree, existingNode);
         delete(intervalSet->hash, member);
+        freeIntervalSetTreeNode(existingNode);
         return 1;
     }
     return 0;

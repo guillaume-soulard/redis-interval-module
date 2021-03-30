@@ -122,9 +122,12 @@ int put(HashMap *hashMap, char *key, Node *value) {
     return 1;
 }
 
-Node *getOnArray(HashMapArray *array, char *key) {
+Node *getOnArray(HashMapArray *array, char *key, size_t *index) {
     if (array != NULL) {
         size_t hashIndex = getHashCode(array->capacity, key);
+        if (index != NULL) {
+            *index = hashIndex;
+        }
         Node *foundNode = array->array[hashIndex];
         if (foundNode != NULL && foundNode->member != NULL && strcmp(foundNode->member, key) == 0) {
             return foundNode;
@@ -140,30 +143,34 @@ Node *get(HashMap *hashMap, char *key) {
     if (hashMap->arraysLen > 1) {
         Node *foundNode;
         for (int i = 0; i < hashMap->arraysCapacity; i++) {
-            foundNode = getOnArray(hashMap->arrays[i], key);
+            foundNode = getOnArray(hashMap->arrays[i], key, NULL);
             if (foundNode != NULL) {
                 break;
             }
         }
         return foundNode;
     } else {
-        return getOnArray(hashMap->arrays[hashMap->primaryArray], key);
+        return getOnArray(hashMap->arrays[hashMap->primaryArray], key, NULL);
     }
 }
 
 void delete(HashMap *hashMap, char *key) {
     Node *toDelete;
+    size_t arrayToDelete = 0;
+    size_t itemIndexToDelete = 0;
     if (hashMap->arraysLen > 1) {
         for (int i = 0; i < hashMap->arraysCapacity; i++) {
-            toDelete = getOnArray(hashMap->arrays[i], key);
+            toDelete = getOnArray(hashMap->arrays[i], key, &itemIndexToDelete);
             if (toDelete != NULL) {
+                arrayToDelete = i;
                 break;
             }
         }
     } else {
-        toDelete = getOnArray(hashMap->arrays[hashMap->primaryArray], key);
+        toDelete = getOnArray(hashMap->arrays[hashMap->primaryArray], key, NULL);
     }
     if (toDelete != NULL && toDelete->member != NULL && strcmp(toDelete->member, key) == 0) {
+        hashMap->arrays[arrayToDelete]->array[itemIndexToDelete] = NULL;
         hashMap->len--;
     }
     incrementalRehash(hashMap);
@@ -184,7 +191,7 @@ LinkedList *scanHash(HashMap *hashMap, long long int *cursor, char *match, long 
     LinkedList *list = newList();
     while (read && iteration <= count && list->len < count) {
         read = 0;
-        for (int i = 0; i < hashMap->reHashArrayIndex && list->len < count; i++) {
+        for (int i = 0; i < hashMap->arraysCapacity && list->len < count; i++) {
             HashMapArray *array = hashMap->arrays[i];
             if (array != NULL && *cursor < array->capacity) {
                 outputIfMatch(array->array[*cursor], match, list);

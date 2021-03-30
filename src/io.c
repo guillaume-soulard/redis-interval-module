@@ -69,6 +69,14 @@ void IntervalSetTypeAofRewrite(RedisModuleIO *aof, RedisModuleString *key, void 
     rewriteNode(aof, key, intervalSet->tree);
 }
 
+void freeNode(Node *node) {
+    if (node != NULL) {
+        freeNode(node->left);
+        freeNode(node->right);
+    }
+    freeIntervalSetTreeNode(node);
+}
+
 void freeIntervalSet(IntervalSet *intervalSet) {
     freeHashMap(intervalSet->hash);
     RedisModule_Free(intervalSet->hash);
