@@ -380,7 +380,7 @@ void checkForCase2(Node *toDelete, int delete, int fromDirection, Node **root) {
                         toDelete->left->par = parent->right;
                     }
                     parent->right->right = toDelete->left;
-                    free(toDelete);
+                    RedisModule_Free(toDelete);
                 }
             } else {  // Sibling is right and child is also right. i.e. LEFT LEFT
                 // ROTATION
@@ -406,7 +406,7 @@ void checkForCase2(Node *toDelete, int delete, int fromDirection, Node **root) {
                         toDelete->right->par = parent->left;
                     }
                     parent->left->left = toDelete->left;
-                    free(toDelete);
+                    RedisModule_Free(toDelete);
                 }
             }
         } else {
@@ -439,7 +439,7 @@ void checkForCase2(Node *toDelete, int delete, int fromDirection, Node **root) {
                         toDelete->right->par = parent->left;
                     }
                     parent->left->left = toDelete->right;
-                    free(toDelete);
+                    RedisModule_Free(toDelete);
                 }
             } else {  // Sibling is left and child is also left. i.e. RIGHT RIGHT
                 // ROTATION
@@ -465,7 +465,7 @@ void checkForCase2(Node *toDelete, int delete, int fromDirection, Node **root) {
                         toDelete->left->par = parent->right;
                     }
                     parent->right->right = toDelete->left;
-                    free(toDelete);
+                    RedisModule_Free(toDelete);
                 }
             }
         }
