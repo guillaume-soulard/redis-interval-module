@@ -11,6 +11,7 @@
 
 size_t getHashCode(int hashCapacity, char *key);
 HashMapArray *initHashMapArray(size_t capacity);
+void incrementalRehash(HashMap *hashMap);
 
 size_t getHashCode(int hashCapacity, char *key) {
     unsigned int hash = 0;
@@ -91,7 +92,8 @@ int putInPrimary(HashMap *hashMap, char *key, Node *value) {
 }
 
 void moveItemToPrimaryArray(HashMap *hashMap, size_t *itemLookup) {
-    while (hashMap->reHashItemIndex < hashMap->len && *itemLookup <= maxItemsToLookup) {
+    HashMapArray *currentArray = hashMap->arrays[hashMap->reHashArrayIndex];
+    while (hashMap->reHashItemIndex < currentArray->capacity && *itemLookup <= maxItemsToLookup) {
         (*itemLookup)++;
         Node *item = hashMap->arrays[hashMap->reHashArrayIndex]->array[hashMap->reHashItemIndex];
         if (item != NULL) {
@@ -108,10 +110,14 @@ void moveItemToPrimaryArray(HashMap *hashMap, size_t *itemLookup) {
 void incrementalRehash(HashMap *hashMap) {
     size_t itemLookup = 0;
     while (hashMap->arraysLen > 1 && hashMap->reHashArrayIndex < hashMap->arraysCapacity && itemLookup <= maxItemsToLookup) {
+        hashMap->reHashItemIndex = 0;
         if (hashMap->arrays[hashMap->reHashArrayIndex] != NULL && hashMap->reHashArrayIndex != hashMap->primaryArray) {
             moveItemToPrimaryArray(hashMap, &itemLookup);
         }
         hashMap->reHashArrayIndex++;
+    }
+    if (hashMap->reHashArrayIndex >= hashMap->arraysCapacity) {
+        hashMap->reHashArrayIndex = 0;
     }
 }
 
@@ -185,7 +191,6 @@ void outputIfMatch(Node *node, const char *match, LinkedList *list) {
 }
 
 LinkedList *scanHash(HashMap *hashMap, long long int *cursor, char *match, long long int count) {
-    incrementalRehash(hashMap);
     long long iteration = 0;
     int read = 1;
     LinkedList *list = newList();
