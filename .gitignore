@@ -5,3 +5,4 @@ CMakeFiles/
 *.so
 *.cmake
 CMakeCache.txt
+Makefile

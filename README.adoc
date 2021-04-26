@@ -6,9 +6,15 @@ This data structure is similar to regular redis sorted set.
 
 == Build & run
 
+Requirements :
+
+* cmake
+* make
+
 ----
 git clone https://github.com/ogama/redis-interval-module
-
+cd redis-interval-module
+cmake .
 make
 ----
 
