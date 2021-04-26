@@ -4,6 +4,18 @@ This module is an implementation of tree https://www.geeksforgeeks.org/interval-
 
 This data structure is similar to regular redis sorted set.
 
+== Build & run
+
+----
+git clone https://github.com/ogama/redis-interval-module
+
+make
+----
+
+----
+redis-server --loadmodule libredis-interval-module.so
+----
+
 == Commands
 
 Syntax of an interval : 
