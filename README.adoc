@@ -28,7 +28,7 @@ Syntax of an interval :
 
 ----
 double ::= "-"(0-9)+*("." (0-9)+)?
-interval ::= ("[" | "]") (double) "," (double | "+inf") ("[" | "]")
+interval ::= ("[" | "]") (double | "-inf") "," (double | "+inf" | "inf") ("[" | "]")
 ----
 
 .Examples
@@ -37,6 +37,7 @@ interval ::= ("[" | "]") (double) "," (double | "+inf") ("[" | "]")
 [-1,3.14[ // between -1 included and 3.14 excluded
 ]-1,3.14] // between -1 excluded and 3.14 included
 ]-1,3.14[ // between -1 excluded and 3.14 excluded
+[0,+inf[ // from 0 to infinity
 ----
 
 === IADD <key> [<interval> <member>]...
