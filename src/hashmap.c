@@ -173,6 +173,7 @@ void delete(HashMap *hashMap, char *key) {
             }
         }
     } else {
+        itemIndexToDelete = getHashCode(hashMap->arrays[hashMap->primaryArray]->capacity, key);
         toDelete = getOnArray(hashMap->arrays[hashMap->primaryArray], key, NULL);
     }
     if (toDelete != NULL && toDelete->member != NULL && strcmp(toDelete->member, key) == 0) {

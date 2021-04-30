@@ -36,7 +36,6 @@ int iAddCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
             char *member = RedisModule_Strdup(RedisModule_StringPtrLen(argv[i+1], NULL));
             reply += add(intervalSet, member, interval);
         }
-        RedisModule_ReplicateVerbatim(ctx);
         return RedisModule_ReplyWithLongLong(ctx, reply);
     }
 }
@@ -133,7 +132,6 @@ int iRemCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
                 char *member = RedisModule_Strdup(RedisModule_StringPtrLen(argv[i], NULL));
                 reply += removeInterval(intervalSet, member);
             }
-            RedisModule_ReplicateVerbatim(ctx);
             return RedisModule_ReplyWithLongLong(ctx, reply);
         }
     }

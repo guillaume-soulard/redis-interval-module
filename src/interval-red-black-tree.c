@@ -46,8 +46,8 @@ void updateParentBounds(Node *node) {
     if (node != NULL) {
         double leftMinLower = DBL_MAX;
         double rightMinLower = DBL_MAX;
-        double leftMaxUpper = DBL_MIN;
-        double rightMaxUpper = DBL_MIN;
+        double leftMaxUpper = -DBL_MAX;
+        double rightMaxUpper = -DBL_MAX;
         if (node->left != NULL) {
             leftMinLower = node->left->minLower;
             leftMaxUpper = node->left->maxUpper;
@@ -527,9 +527,7 @@ void checkForCase2(Node *toDelete, int delete, int fromDirection, Node **root) {
     }
 }
 
-// To delete a node from the tree
 void deleteNode(Node **root, Node *toDelete) {
-    // Look for the leftmost of right node or right most of left node
     if (toDelete->left != NULL) {
         toDelete = toDelete->left;
         while (toDelete->right != NULL) {
@@ -546,36 +544,28 @@ void deleteNode(Node **root, Node *toDelete) {
         return;
     }
 
-    // Checking for case 1
     if (toDelete->color == 1 ||
         (toDelete->left != NULL && toDelete->left->color == 1) ||
         (toDelete->right != NULL && toDelete->right->color == 1)) {
-        // if it is a leaf
         if (toDelete->left == NULL && toDelete->right == NULL) {
-            // Delete instantly
             if (toDelete->par->left == toDelete) {
                 toDelete->par->left = NULL;
             } else {
                 toDelete->par->right = NULL;
             }
-        } else {  // else its child should be red
-
-            // Check for the exitstence of left node
+        } else {
             if (toDelete->left != NULL) {
-                // The node should be right to its parent
                 toDelete->par->right = toDelete->left;
                 toDelete->left->par = toDelete->par;
                 toDelete->left->color = 1;
-            } else {  // else the right node should be red
+            } else {
                 toDelete->par->left = toDelete->right;
                 toDelete->right->par = toDelete->par;
                 toDelete->right->color = 1;
             }
         }
-
-        // Remove the node from memory
         freeIntervalSetTreeNode(toDelete);
-    } else {  // Case 2
+    } else {
         checkForCase2(toDelete, 1, ((toDelete->par->right == toDelete)), root);
     }
 }

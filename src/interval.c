@@ -2,6 +2,7 @@
 #include "stdlib.h"
 #include "interval.h"
 #include "string.h"
+#include <float.h>
 
 #define doubleBufferSize 512
 
@@ -48,8 +49,16 @@ Interval *parseInterval(RedisModuleString *intervalString) {
     if (missingBound[0] || missingBound[1]) {
         return NULL;
     }
-    lowerBound = strtod(bounds[0], NULL);
-    upperBound = strtod(bounds[1], NULL);
+    if (strcmp(bounds[0], "-inf") == 0) {
+        lowerBound = -DBL_MAX;
+    } else {
+        lowerBound = strtod(bounds[0], NULL);
+    }
+    if (strcmp(bounds[1], "inf") == 0 || strcmp(bounds[1], "+inf") == 0) {
+        upperBound = DBL_MAX;
+    } else {
+        upperBound = strtod(bounds[1], NULL);
+    }
     if (lowerBound > upperBound) {
         return NULL;
     }
@@ -93,12 +102,22 @@ int overlaps(Interval *interval1, Interval *interval2) {
             containsValue(interval2, interval1->upperBound, interval1->includeUpperBound);
 }
 
+void outputInfBoundOrValue(RedisModuleCtx *ctx, double value) {
+    if (value == -DBL_MAX) {
+        RedisModule_ReplyWithCString(ctx, "-inf");
+    } else if (value == DBL_MAX) {
+        RedisModule_ReplyWithCString(ctx, "+inf");
+    } else {
+        RedisModule_ReplyWithDouble(ctx, value);
+    }
+}
+
 void outputInterval(RedisModuleCtx *ctx, char *member, Interval *interval) {
     RedisModule_ReplyWithArray(ctx,REDISMODULE_POSTPONED_ARRAY_LEN);
     RedisModule_ReplyWithCString(ctx, member);
     RedisModule_ReplyWithDouble(ctx, interval->includeLowerBound);
-    RedisModule_ReplyWithDouble(ctx, interval->lowerBound);
+    outputInfBoundOrValue(ctx, interval->lowerBound);
     RedisModule_ReplyWithDouble(ctx, interval->includeUpperBound);
-    RedisModule_ReplyWithDouble(ctx, interval->upperBound);
+    outputInfBoundOrValue(ctx, interval->upperBound);
     RedisModule_ReplySetArrayLength(ctx, 5);
 }
