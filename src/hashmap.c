@@ -191,7 +191,7 @@ void outputIfMatch(Node *node, const char *match, LinkedList *list) {
     }
 }
 
-LinkedList *scanHash(HashMap *hashMap, long long int *cursor, char *match, long long int count) {
+LinkedList *scanHash(HashMap *hashMap, long long int *cursor, const char *match, long long int count) {
     long long iteration = 0;
     int read = 1;
     LinkedList *list = newList();

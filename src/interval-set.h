@@ -15,5 +15,5 @@ int add(IntervalSet *intervalSet, char *value, Interval *interval);
 void searchValue(RedisModuleCtx *ctx, IntervalSet *intervalSet, double valueToSearch);
 void searchInterval(RedisModuleCtx *ctx, IntervalSet *intervalSet, Interval *intervalToSearch);
 int removeInterval(IntervalSet *intervalSet, char *member);
-void scanIntervalSet(RedisModuleCtx *ctx, IntervalSet *intervalSet, long long cursor, char *match, long long count);
+void scanIntervalSet(RedisModuleCtx *ctx, IntervalSet *intervalSet, long long cursor, const char *match, long long count);
 #endif

@@ -113,11 +113,10 @@ void outputInfBoundOrValue(RedisModuleCtx *ctx, double value) {
 }
 
 void outputInterval(RedisModuleCtx *ctx, char *member, Interval *interval) {
-    RedisModule_ReplyWithArray(ctx,REDISMODULE_POSTPONED_ARRAY_LEN);
+    RedisModule_ReplyWithArray(ctx,5);
     RedisModule_ReplyWithCString(ctx, member);
     RedisModule_ReplyWithDouble(ctx, interval->includeLowerBound);
     outputInfBoundOrValue(ctx, interval->lowerBound);
     RedisModule_ReplyWithDouble(ctx, interval->includeUpperBound);
     outputInfBoundOrValue(ctx, interval->upperBound);
-    RedisModule_ReplySetArrayLength(ctx, 5);
 }

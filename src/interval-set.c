@@ -46,14 +46,15 @@ void searchInterval(RedisModuleCtx *ctx, IntervalSet *intervalSet, Interval *int
     RedisModule_ReplySetArrayLength(ctx, len);
 }
 
-void scanIntervalSet(RedisModuleCtx *ctx, IntervalSet *intervalSet, long long cursor, char *match, long long count) {
-    LinkedList *list = scanHash(intervalSet->hash, &cursor, match, count);
+void scanIntervalSet(RedisModuleCtx *ctx, IntervalSet *intervalSet, long long cursor, const char *match, long long count) {
+    char *matchPattern = strdup(match);
+    LinkedList *list = scanHash(intervalSet->hash, &cursor, matchPattern, count);
+    RedisModule_ReplyWithArray(ctx, 2);
     RedisModule_ReplyWithLongLong(ctx, cursor);
-    RedisModule_ReplyWithArray(ctx,REDISMODULE_POSTPONED_ARRAY_LEN);
+    RedisModule_ReplyWithArray(ctx, list->len);
     LinkedListNode *listNode = list->head;
     while (listNode != NULL) {
         outputInterval(ctx, listNode->item->member, listNode->item->interval);
         listNode = listNode->next;
     }
-    RedisModule_ReplySetArrayLength(ctx, list->len);
 }

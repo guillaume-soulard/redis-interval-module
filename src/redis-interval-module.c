@@ -174,9 +174,7 @@ int iScanCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
             if (count < 0) {
                 return RedisModule_ReplyWithError(ctx, "invalid count");
             }
-            RedisModule_ReplyWithArray(ctx, REDISMODULE_POSTPONED_ARRAY_LEN);
             scanIntervalSet(ctx, intervalSet, cursor, match, count);
-            RedisModule_ReplySetArrayLength(ctx, 2);
         }
         return REDISMODULE_OK;
     }

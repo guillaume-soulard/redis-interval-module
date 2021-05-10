@@ -24,5 +24,5 @@ void freeHashMap(HashMap *hashMap);
 int put(HashMap *hashMap, char *key, Node *value);
 Node *get(HashMap *hashMap, char *key);
 void delete(HashMap *hashMap, char *key);
-LinkedList *scanHash(HashMap *hashMap, long long int *cursor, char *match, long long int count);
+LinkedList *scanHash(HashMap *hashMap, long long int *cursor, const char *match, long long int count);
 #endif
