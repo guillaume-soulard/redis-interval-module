@@ -24,7 +24,7 @@ size_t getHashCode(int hashCapacity, char *key) {
 HashMapArray *initHashMapArray(size_t capacity) {
     HashMapArray *array = RedisModule_Alloc(sizeof(HashMapArray));
     array->capacity = capacity;
-    array->array = RedisModule_Alloc(capacity * sizeof(Node));
+    array->array = RedisModule_Alloc(capacity * sizeof(Node*));
     for (int i = 0; i < array->capacity; i++) {
         array->array[i] = NULL;
     }
@@ -35,7 +35,7 @@ HashMap *createHashMap() {
     HashMap *hashMap = RedisModule_Alloc(sizeof(HashMap));
     hashMap->len = 0;
     hashMap->arraysCapacity = hashMapResizeCapacity;
-    hashMap->arrays = RedisModule_Alloc(hashMap->arraysCapacity * sizeof(HashMapArray));
+    hashMap->arrays = RedisModule_Alloc(hashMap->arraysCapacity * sizeof(HashMapArray*));
     for (int i = 0; i <= hashMap->arraysCapacity; i++) {
         hashMap->arrays[i] = NULL;
     }
