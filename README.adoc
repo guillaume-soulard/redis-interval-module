@@ -38,6 +38,7 @@ interval ::= ("[" | "]") (double | "-inf") "," (double | "+inf" | "inf") ("[" | 
 ]-1,3.14] // between -1 excluded and 3.14 included
 ]-1,3.14[ // between -1 excluded and 3.14 excluded
 [0,+inf[ // from 0 to infinity
+]-inf,inf[ // from -infinity to infinity
 ----
 
 === IADD <key> [<interval> <member>]...
@@ -79,9 +80,11 @@ Return value : the number of intervals removed from the interval set.
 (integer) 2
 ----
 
-=== ICONTAINS <key> <double>
+=== ICONTAINS <key> <value>
 
 This command query an interval set and return the list of intervals that contains the value.
+
+The value can be a decimal number or infinity (-inf, inf or +inf)
 
 Time complexity : O(log(N)) where N is the number of items in interval set
 Return value : the list of intervals.
