@@ -1,8 +1,6 @@
 = Redis interval module
 
-This module is an implementation of tree https://www.geeksforgeeks.org/interval-tree/[interval tree].
-
-This data structure is similar to regular redis sorted set.
+This data structure is similar to regular redis sorted set but store interval instead of number.
 
 == Build & run
 
@@ -50,7 +48,7 @@ Return value : the number of intervals added in interval set
 
 .Example
 ----
-127.0.0.1:6379> IADD intervals 1,5 interval:1 10,15 interval:2
+127.0.0.1:6379> IADD intervals 1,5 interval:1 [10,15[ interval:2
 (integer) 2
 ----
 
@@ -118,7 +116,7 @@ Return the list of intervals that contains of overlaps the interval parameter.
 Time complexity : O(log(N))
 Return value : the list of intervals with the following format :
 
-.Retrun format
+.Return format
 ----
 1) 1) member (string)
    2) lower bound inclusion (0 : excluded, 1 : included)
@@ -152,7 +150,7 @@ This command work like regular redis `SCAN`, `SSCAN`, `ZSCAN` and `HSCAN` comman
 Time complexity : O(N) Where N is the number of intervals to read specified by the `COUNT` clause (10 if the `COUNT` clause is specified).
 Return format : the same format as the `SCAN` command, but every items is an interval.
 
-.Item fortat
+.Item format
 ----
 1) 1) member (string)
    2) lower bound inclusion (0 : excluded, 1 : included)
