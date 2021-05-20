@@ -2,6 +2,7 @@
 #include "interval-set.h"
 #include "io.h"
 #include <string.h>
+#include "util.h"
 
 static RedisModuleType *IntervalSetType;
 
@@ -78,8 +79,8 @@ int iContainsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
             return RedisModule_ReplyWithEmptyArray(ctx);
         } else {
             intervalSet = RedisModule_ModuleTypeGetValue(key);
-            double valueToSearch = 0;
-            if (RedisModule_StringToDouble(argv[2], &valueToSearch) == REDISMODULE_ERR) {
+            double valueToSearch;
+            if (!redisModuleStringToDouble(argv[2], &valueToSearch)) {
                 return RedisModule_ReplyWithError(ctx, "incorrect value");
             }
             searchValue(ctx, intervalSet, valueToSearch);

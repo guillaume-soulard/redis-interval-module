@@ -3,6 +3,7 @@
 #include "interval.h"
 #include "string.h"
 #include <float.h>
+#include "util.h"
 
 #define doubleBufferSize 512
 
@@ -49,15 +50,11 @@ Interval *parseInterval(RedisModuleString *intervalString) {
     if (missingBound[0] || missingBound[1]) {
         return NULL;
     }
-    if (strcmp(bounds[0], "-inf") == 0) {
-        lowerBound = -DBL_MAX;
-    } else {
-        lowerBound = strtod(bounds[0], NULL);
+    if (!stringToDouble(bounds[0], &lowerBound)) {
+        return NULL;
     }
-    if (strcmp(bounds[1], "inf") == 0 || strcmp(bounds[1], "+inf") == 0) {
-        upperBound = DBL_MAX;
-    } else {
-        upperBound = strtod(bounds[1], NULL);
+    if (!stringToDouble(bounds[1], &upperBound)) {
+        return NULL;
     }
     if (lowerBound > upperBound) {
         return NULL;

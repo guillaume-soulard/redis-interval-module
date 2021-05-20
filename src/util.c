@@ -2,6 +2,9 @@
 
 #include <ctype.h>
 #include "util.h"
+#include "string.h"
+#include <float.h>
+#include <stdlib.h>
 
 int stringMatchLen(const char *pattern, int patternLen,
                    const char *string, int stringLen, int nocase)
@@ -121,4 +124,22 @@ int stringMatchLen(const char *pattern, int patternLen,
     if (patternLen == 0 && stringLen == 0)
         return 1;
     return 0;
+}
+
+int stringToDouble(const char *str, double *value) {
+    if (strcmp(str, "-inf") == 0) {
+        *value = -DBL_MAX;
+        return 1;
+    } else if (strcmp(str, "inf") == 0 || strcmp(str, "+inf") == 0) {
+        *value = DBL_MAX;
+        return 1;
+    } else {
+        char *endPtr;
+        *value = strtod(str, &endPtr);
+        return strlen(endPtr) == 0;
+    }
+}
+int redisModuleStringToDouble(RedisModuleString *str, double *value) {
+    char *strValue = RedisModule_StringPtrLen(str, NULL);
+    return stringToDouble(strValue, value);
 }
