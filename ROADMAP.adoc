@@ -1,0 +1,7 @@
+* unit tests
+* IADD optimizations
+* IGET command to get a specific member
+* ICONTAINS and IOVERLAPS commands add COUNT argument
+* ICONTAINS and IOVERLAPS commands add multiple arguments
+* ICONTAINS and IOVERLAPS add store option
+* IINTER, IDIFF and IUNION <keys>... [STORE <destination>]
