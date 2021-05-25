@@ -1,4 +1,5 @@
 * unit tests
+* memory optimization (bit fields)
 * IADD optimizations
 * IGET command to get a specific member
 * ICONTAINS and IOVERLAPS commands add COUNT argument
