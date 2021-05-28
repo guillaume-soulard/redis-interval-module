@@ -74,15 +74,15 @@ int iContainsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != IntervalSetType) {
         return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
     } else {
+        double valueToSearch;
+        if (!redisModuleStringToDouble(argv[2], &valueToSearch)) {
+            return RedisModule_ReplyWithError(ctx, "incorrect value");
+        }
         IntervalSet *intervalSet;
         if (type == REDISMODULE_KEYTYPE_EMPTY) {
             return RedisModule_ReplyWithEmptyArray(ctx);
         } else {
             intervalSet = RedisModule_ModuleTypeGetValue(key);
-            double valueToSearch;
-            if (!redisModuleStringToDouble(argv[2], &valueToSearch)) {
-                return RedisModule_ReplyWithError(ctx, "incorrect value");
-            }
             searchValue(ctx, intervalSet, valueToSearch);
             return REDISMODULE_OK;
         }

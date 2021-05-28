@@ -1,5 +1,3 @@
-import time
-
 from RLTest import Env
 
 
@@ -53,3 +51,9 @@ class TestIRem():
         self.env.cmd('iadd', 'intervals', '0,1', 'i1')
         self.env.cmd('iadd', 'intervals', '2,3', 'i2')
         self.env.expect('irem', 'intervals', 'i1', 'i3').equal(1)
+
+    def test_irem_should_return_0_when_deleting_2_members_that_not_exists(self):
+        self.env.cmd('FLUSHALL')
+        self.env.cmd('iadd', 'intervals', '0,1', 'i1')
+        self.env.cmd('iadd', 'intervals', '2,3', 'i2')
+        self.env.expect('irem', 'intervals', 'i3', 'i4').equal(0)
