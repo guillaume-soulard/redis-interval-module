@@ -2,10 +2,10 @@
 #define LINKED_LIST_H
 
 #include "linked-list.h"
-#include "interval-red-black-tree.h"
+#include "item.h"
 
 typedef struct LinkedListNode {
-    Node *item;
+    Item *item;
     struct LinkedListNode *next;
 } LinkedListNode;
 
@@ -16,6 +16,6 @@ typedef struct LinkedList {
 } LinkedList;
 
 LinkedList *newList();
-void push(LinkedList *list, Node *item);
+void push(LinkedList *list, Item *item);
 
 #endif

@@ -39,9 +39,9 @@ interval ::= ("[" | "]") (double | "-inf") "," (double | "+inf" | "inf") ("[" | 
 ]-inf,inf[ // from -infinity to infinity
 ----
 
-=== IADD <key> [<interval> <member>]...
+=== IADD <key> [<interval> <item>]...
 
-Add an interval with an associated member in the interval set.
+Add an interval with an associated item in the interval set.
 
 Time complexity : O(Log(n))
 Return value : the number of intervals added in interval set
@@ -65,9 +65,9 @@ Return value : the number of intervals in the given interval set
 (integer) 2
 ----
 
-=== IREM <key> [<member>]...
+=== IREM <key> [<item>]...
 
-Remove the interval by the member.
+Remove the interval by the item.
 
 Time complexity : O(log(n))
 Return value : the number of intervals removed from the interval set.
@@ -89,7 +89,7 @@ Return value : the list of intervals.
 
 .Retrun format
 ----
-1) 1) member (string)
+1) 1) item (string)
    2) lower bound inclusion (0 : excluded, 1 : included)
    3) lower bound value (double)
    4) upper bound inclusion (0 : excluded, 1 : included)
@@ -118,7 +118,7 @@ Return value : the list of intervals with the following format :
 
 .Return format
 ----
-1) 1) member (string)
+1) 1) item (string)
    2) lower bound inclusion (0 : excluded, 1 : included)
    3) lower bound value (double)
    4) upper bound inclusion (0 : excluded, 1 : included)
@@ -152,7 +152,7 @@ Return format : the same format as the `SCAN` command, but every items is an int
 
 .Item format
 ----
-1) 1) member (string)
+1) 1) item (string)
    2) lower bound inclusion (0 : excluded, 1 : included)
    3) lower bound value (double)
    4) upper bound inclusion (0 : excluded, 1 : included)

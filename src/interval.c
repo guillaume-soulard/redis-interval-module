@@ -1,5 +1,4 @@
 #include "redismodule.h"
-#include "stdlib.h"
 #include "interval.h"
 #include "string.h"
 #include <float.h>
@@ -14,6 +13,10 @@ Interval *createInterval(int includeLowerBound, double lowerBound, double upperB
     interval->lowerBound = lowerBound;
     interval->upperBound = upperBound;
     return interval;
+}
+
+void freeInterval(Interval *interval) {
+    RedisModule_Free(interval);
 }
 
 Interval *parseInterval(RedisModuleString *intervalString) {

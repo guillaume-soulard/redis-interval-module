@@ -1,6 +1,6 @@
 #include "interval-set.h"
 #include "string.h"
-#include "interval-red-black-tree.h"
+#include "treap-tree.h"
 #include "linked-list.h"
 
 IntervalSet *createIntervalSet() {
@@ -12,21 +12,18 @@ IntervalSet *createIntervalSet() {
 }
 
 int add(IntervalSet *intervalSet, char *member, Interval *interval) {
-    Node *existingNode = get(intervalSet->hash, member);
-    if (existingNode != NULL) {
-        delete(intervalSet->hash, member);
-        deleteNode(&intervalSet->tree, existingNode);
+    Item *insertedNode = put(intervalSet->hash, member, interval);
+    if (insertedNode != NULL) {
+        insertNode(&intervalSet->tree, insertedNode);
     }
-    Node *newNode = insertNode(interval->lowerBound, &intervalSet->tree, member, interval);
-    return put(intervalSet->hash, member, newNode);
+    return insertedNode != NULL;
 }
 
 int removeInterval(IntervalSet *intervalSet, char *member) {
-    Node *existingNode = get(intervalSet->hash, member);
-    if (existingNode != NULL) {
-        deleteNode(&intervalSet->tree, existingNode);
+    Item *existingItem = get(intervalSet->hash, member);
+    if (existingItem != NULL) {
+        deleteNode(&intervalSet->tree, existingItem);
         delete(intervalSet->hash, member);
-        freeIntervalSetTreeNode(existingNode);
         return 1;
     }
     return 0;

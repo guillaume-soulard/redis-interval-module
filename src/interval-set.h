@@ -2,11 +2,11 @@
 #define INTERVAL_SET_H
 
 #include "interval.h"
-#include "interval-red-black-tree.h"
+#include "treap-tree.h"
 #include "hashmap.h"
 
 typedef struct IntervalSet {
-    Node *tree;
+    TreeNode *tree;
     HashMap *hash;
 } IntervalSet;
 

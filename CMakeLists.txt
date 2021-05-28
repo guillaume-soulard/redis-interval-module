@@ -13,11 +13,13 @@ add_library(
         src/interval.c
         src/io.h
         src/io.c
-        src/interval-red-black-tree.c
+        src/treap-tree.c
         src/hashmap.h
         src/hashmap.c
         src/util.c
         src/util.h
         src/linked-list.h
         src/linked-list.c
+        src/item.h
+        src/item.c
 )

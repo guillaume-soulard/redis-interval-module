@@ -3,17 +3,14 @@
 #include "string.h"
 #include "util.h"
 #include "linked-list.h"
+#include "item.h"
 
 #define initialHashMapCapacity 10
 #define hashMapGrowthFactor 2
 #define hashMapResizeCapacity 100
 #define maxItemsToLookup 100000
 
-size_t getHashCode(int hashCapacity, char *key);
-HashMapArray *initHashMapArray(size_t capacity);
-void incrementalRehash(HashMap *hashMap);
-
-size_t getHashCode(int hashCapacity, char *key) {
+size_t getHashCode(size_t hashCapacity, char *key) {
     unsigned int hash = 0;
     for (int i = 0; i < strlen(key); i++) {
         hash = 31 * hash + key[i];
@@ -24,7 +21,7 @@ size_t getHashCode(int hashCapacity, char *key) {
 HashMapArray *initHashMapArray(size_t capacity) {
     HashMapArray *array = RedisModule_Alloc(sizeof(HashMapArray));
     array->capacity = capacity;
-    array->array = RedisModule_Alloc(capacity * sizeof(Node*));
+    array->array = RedisModule_Alloc(capacity * sizeof(Item*));
     for (int i = 0; i < array->capacity; i++) {
         array->array[i] = NULL;
     }
@@ -79,25 +76,27 @@ void newHashMapPrimaryArray(HashMap *hashMap) {
     }
 }
 
-int putInPrimary(HashMap *hashMap, char *key, Node *value) {
+Item *putInPrimary(HashMap *hashMap, char *key, Interval *interval) {
     size_t hashIndex = getHashCode(hashMap->arrays[hashMap->primaryArray]->capacity, key);
-    Node *existingValue = hashMap->arrays[hashMap->primaryArray]->array[hashIndex];
+    Item *existingValue = hashMap->arrays[hashMap->primaryArray]->array[hashIndex];
     if (existingValue != NULL && strcmp(existingValue->member, key) != 0) {
         newHashMapPrimaryArray(hashMap);
-        putInPrimary(hashMap, key, value);
+        putInPrimary(hashMap, key, interval);
     } else {
-        hashMap->arrays[hashMap->primaryArray]->array[hashIndex] = value;
+        Item *nodeToInsert = newItem(key, interval);
+        hashMap->arrays[hashMap->primaryArray]->array[hashIndex] = nodeToInsert;
+        return nodeToInsert;
     }
-    return 1;
+    return NULL;
 }
 
 void moveItemToPrimaryArray(HashMap *hashMap, size_t *itemLookup) {
     HashMapArray *currentArray = hashMap->arrays[hashMap->reHashArrayIndex];
     while (hashMap->reHashItemIndex < currentArray->capacity && *itemLookup <= maxItemsToLookup) {
         (*itemLookup)++;
-        Node *item = hashMap->arrays[hashMap->reHashArrayIndex]->array[hashMap->reHashItemIndex];
+        Item *item = hashMap->arrays[hashMap->reHashArrayIndex]->array[hashMap->reHashItemIndex];
         if (item != NULL) {
-            putInPrimary(hashMap, item->member, item);
+            putInPrimary(hashMap, item->member, item->interval);
             hashMap->arrays[hashMap->reHashArrayIndex]->array[hashMap->reHashItemIndex] = NULL;
         }
         hashMap->reHashItemIndex++;
@@ -121,21 +120,21 @@ void incrementalRehash(HashMap *hashMap) {
     }
 }
 
-int put(HashMap *hashMap, char *key, Node *value) {
-    putInPrimary(hashMap, key, value);
+Item *put(HashMap *hashMap, char *key, Interval *interval) {
+    Item *insertedNode = putInPrimary(hashMap, key, interval);
     hashMap->len++;
     incrementalRehash(hashMap);
-    return 1;
+    return insertedNode;
 }
 
-Node *getOnArray(HashMapArray *array, char *key, size_t *index) {
+Item *getOnArray(HashMapArray *array, char *key, size_t *index) {
     if (array != NULL) {
         size_t hashIndex = getHashCode(array->capacity, key);
         if (index != NULL) {
             *index = hashIndex;
         }
-        Node *foundNode = array->array[hashIndex];
-        if (foundNode != NULL && foundNode->member != NULL && strcmp(foundNode->member, key) == 0) {
+        Item *foundNode = array->array[hashIndex];
+        if (foundNode != NULL && strcmp(foundNode->member, key) == 0) {
             return foundNode;
         } else {
             return NULL;
@@ -144,10 +143,10 @@ Node *getOnArray(HashMapArray *array, char *key, size_t *index) {
     return NULL;
 }
 
-Node *get(HashMap *hashMap, char *key) {
+Item *get(HashMap *hashMap, char *key) {
     incrementalRehash(hashMap);
     if (hashMap->arraysLen > 1) {
-        Node *foundNode;
+        Item *foundNode;
         for (int i = 0; i < hashMap->arraysCapacity; i++) {
             foundNode = getOnArray(hashMap->arrays[i], key, NULL);
             if (foundNode != NULL) {
@@ -161,7 +160,7 @@ Node *get(HashMap *hashMap, char *key) {
 }
 
 void delete(HashMap *hashMap, char *key) {
-    Node *toDelete;
+    Item *toDelete;
     size_t arrayToDelete = 0;
     size_t itemIndexToDelete = 0;
     if (hashMap->arraysLen > 1) {
@@ -176,14 +175,15 @@ void delete(HashMap *hashMap, char *key) {
         itemIndexToDelete = getHashCode(hashMap->arrays[hashMap->primaryArray]->capacity, key);
         toDelete = getOnArray(hashMap->arrays[hashMap->primaryArray], key, NULL);
     }
-    if (toDelete != NULL && toDelete->member != NULL && strcmp(toDelete->member, key) == 0) {
+    if (toDelete != NULL && strcmp(toDelete->member, key) == 0) {
+        freeItem(hashMap->arrays[arrayToDelete]->array[itemIndexToDelete]);
         hashMap->arrays[arrayToDelete]->array[itemIndexToDelete] = NULL;
         hashMap->len--;
     }
     incrementalRehash(hashMap);
 }
 
-void outputIfMatch(Node *node, const char *match, LinkedList *list) {
+void outputIfMatch(Item *node, const char *match, LinkedList *list) {
     if (node != NULL) {
         if (stringMatchLen(match, strlen(match), node->member, strlen(node->member), 0)) {
             push(list, node);

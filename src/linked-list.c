@@ -9,14 +9,14 @@ LinkedList *newList() {
     return list;
 }
 
-LinkedListNode *newListNode(Node *item) {
+LinkedListNode *newListNode(Item *item) {
     LinkedListNode *node = RedisModule_Alloc(sizeof (LinkedListNode));
     node->item = item;
     node->next = NULL;
     return node;
 }
 
-void push(LinkedList *list, Node *item) {
+void push(LinkedList *list, Item *item) {
     LinkedListNode *newNode = newListNode(item);
     if (list->head == NULL) {
         list->head = newNode;

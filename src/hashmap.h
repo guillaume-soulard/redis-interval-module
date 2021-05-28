@@ -1,12 +1,12 @@
 #ifndef HASH_MAP_H
 #define HASH_MAP_H
 
-#include "interval-red-black-tree.h"
+#include "item.h"
 #include "linked-list.h"
 
 typedef struct HashMapArray {
     size_t capacity;
-    Node **array;
+    Item **array;
 } HashMapArray;
 
 typedef struct HashMap {
@@ -21,8 +21,8 @@ typedef struct HashMap {
 
 HashMap *createHashMap();
 void freeHashMap(HashMap *hashMap);
-int put(HashMap *hashMap, char *key, Node *value);
-Node *get(HashMap *hashMap, char *key);
+Item *put(HashMap *hashMap, char *key, Interval *interval);
+Item *get(HashMap *hashMap, char *key);
 void delete(HashMap *hashMap, char *key);
 LinkedList *scanHash(HashMap *hashMap, long long int *cursor, const char *match, long long int count);
 #endif

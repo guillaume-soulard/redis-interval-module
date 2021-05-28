@@ -1,7 +1,7 @@
 * unit tests
 * memory optimization (bit fields)
 * IADD optimizations
-* IGET command to get a specific member
+* IGET command to get a specific item
 * ICONTAINS and IOVERLAPS commands add COUNT argument
 * ICONTAINS and IOVERLAPS commands add multiple arguments
 * ICONTAINS and IOVERLAPS add store option

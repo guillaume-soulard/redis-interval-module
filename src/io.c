@@ -1,7 +1,7 @@
 #include "io.h"
 #include "redismodule.h"
 #include "interval-set.h"
-#include "interval-red-black-tree.h"
+#include "treap-tree.h"
 #include "string.h"
 #include "hashmap.h"
 
@@ -24,15 +24,15 @@ void *IntervalSetTypeRdbLoad(RedisModuleIO *rdb, int encver) {
     return intervalSet;
 }
 
-void saveNode(RedisModuleIO *rdb, Node *node) {
+void saveNode(RedisModuleIO *rdb, TreeNode *node) {
     if (node != NULL) {
         saveNode(rdb, node->left);
         saveNode(rdb, node->right);
-        RedisModule_SaveStringBuffer(rdb, node->member, strlen(node->member));
-        RedisModule_SaveUnsigned(rdb, node->interval->includeLowerBound);
-        RedisModule_SaveDouble(rdb, node->interval->lowerBound);
-        RedisModule_SaveDouble(rdb, node->interval->upperBound);
-        RedisModule_SaveUnsigned(rdb, node->interval->includeUpperBound);
+        RedisModule_SaveStringBuffer(rdb, node->item->member, strlen(node->item->member));
+        RedisModule_SaveUnsigned(rdb, node->item->interval->includeLowerBound);
+        RedisModule_SaveDouble(rdb, node->item->interval->lowerBound);
+        RedisModule_SaveDouble(rdb, node->item->interval->upperBound);
+        RedisModule_SaveUnsigned(rdb, node->item->interval->includeUpperBound);
     }
 }
 
@@ -42,25 +42,25 @@ void IntervalSetTypeRdbSave(RedisModuleIO *rdb, void *value) {
     saveNode(rdb, intervalSet->tree);
 }
 
-void rewriteNode(RedisModuleIO *aof, RedisModuleString *key, Node *node) {
+void rewriteNode(RedisModuleIO *aof, RedisModuleString *key, TreeNode *node) {
     if (node != NULL) {
         rewriteNode(aof, key, node->left);
         rewriteNode(aof, key, node->right);
         char intervalStr[203];
         char includeLowerChar = '[';
         char includeUpperChar = ']';
-        if (node->interval->includeLowerBound == 0) {
+        if (node->item->interval->includeLowerBound == 0) {
             includeLowerChar = ']';
         }
-        if (node->interval->includeUpperBound == 0) {
+        if (node->item->interval->includeUpperBound == 0) {
             includeUpperChar = ']';
         }
         snprintf(intervalStr, 203, "%c%f,%f%c",
                  includeLowerChar,
-                 node->interval->lowerBound,
-                 node->interval->upperBound,
+                 node->item->interval->lowerBound,
+                 node->item->interval->upperBound,
                  includeUpperChar);
-        RedisModule_EmitAOF(aof, "IADD", "scc", key, intervalStr, node->member);
+        RedisModule_EmitAOF(aof, "IADD", "scc", key, intervalStr, node->item);
     }
 }
 
@@ -69,18 +69,10 @@ void IntervalSetTypeAofRewrite(RedisModuleIO *aof, RedisModuleString *key, void 
     rewriteNode(aof, key, intervalSet->tree);
 }
 
-void freeNode(Node *node) {
-    if (node != NULL) {
-        freeNode(node->left);
-        freeNode(node->right);
-    }
-    freeIntervalSetTreeNode(node);
-}
-
 void freeIntervalSet(IntervalSet *intervalSet) {
     freeHashMap(intervalSet->hash);
     RedisModule_Free(intervalSet->hash);
-    freeIntervalSetTreeNode(intervalSet->tree);
+    freeTreeNode(intervalSet->tree);
     RedisModule_Free(intervalSet);
 }
 
