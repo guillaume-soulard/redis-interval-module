@@ -1,9 +1,0 @@
-= Bugs
-
-== IREM segfault
-
-iadd intervals [0,inf[ ints [-inf,0[ i2
-iadd intervals [0,9999999999999999999.9999999999999999999[ ints [-9999999999999999999.9999999999999999999,0[ i2
-irem intervals ints i2
-
-infinity problem
