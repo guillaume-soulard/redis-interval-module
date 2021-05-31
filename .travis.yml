@@ -3,7 +3,8 @@ os: linux
 compiler:
   - gcc
 
-# install newer camke version
+# install newer cmake version
+# install redis 6.2.3
 install:
   - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
   - mkdir ${DEPS_DIR} && cd ${DEPS_DIR}
@@ -11,13 +12,15 @@ install:
   - tar -xvf cmake-3.20.3-linux-x86_64.tar.gz > /dev/null
   - mv cmake-3.20.3-linux-x86_64 cmake-install
   - PATH=${DEPS_DIR}/cmake-install:${DEPS_DIR}/cmake-install/bin:$PATH
+  - travis_retry wget https://github.com/redis/redis/archive/refs/tags/6.2.3.tar.gz
+  - tar -xvf 6.2.3.tar.gz
+  - cd redis-6.2.3
+  - make
+  - PATH=${DEPS_DIR}/redis-6.2.3/src:$PATH
   - cd ${TRAVIS_BUILD_DIR}
 
 before_script:
   - cmake .
-
-services:
-  - redis-server
 
 script:
   - make
