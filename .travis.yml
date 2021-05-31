@@ -1,0 +1,12 @@
+os: linux
+compiler:
+  - gcc
+before_script:
+  - cmake .
+
+services:
+  - redis-server
+
+script:
+  - make
+  - tests/test.sh
