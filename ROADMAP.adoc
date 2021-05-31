@@ -1,4 +1,3 @@
-* add CI with travis-ci with some redis versions
 * IGET command to get a specific item
 * ICONTAINS and IOVERLAPS commands add COUNT argument
 * ICONTAINS and IOVERLAPS commands add multiple arguments
