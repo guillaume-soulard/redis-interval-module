@@ -21,4 +21,5 @@ services:
 
 script:
   - make
-  - tests/test.sh
+  - cd tests
+  - test.sh
