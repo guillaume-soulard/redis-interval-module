@@ -13,3 +13,4 @@ tests/logs
 venv
 *.xml
 *.iml
+Testing/**
