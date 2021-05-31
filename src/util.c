@@ -5,6 +5,7 @@
 #include "string.h"
 #include <float.h>
 #include <stdlib.h>
+#include "math.h"
 
 int stringMatchLen(const char *pattern, int patternLen,
                    const char *string, int stringLen, int nocase)
@@ -136,6 +137,11 @@ int stringToDouble(const char *str, double *value) {
     } else {
         char *endPtr;
         *value = strtod(str, &endPtr);
+        if (isinf(*value) && *value > 0) {
+            *value = DBL_MAX;
+        } else if (isinf(*value) && *value < 0) {
+            *value = -DBL_MAX;
+        }
         return strlen(endPtr) == 0;
     }
 }

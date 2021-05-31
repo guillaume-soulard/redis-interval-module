@@ -53,11 +53,13 @@ class TestIOverlaps():
     def test_ioverlaps_should_return_the_interval_when_parameter_interval_abuts_lower_bound_and_lower_not_included(self):
         self.env.cmd('FLUSHALL')
         self.env.cmd('iadd', 'intervals', ']5,10', 'i1')
-        self.env.expect('ioverlaps', 'intervals', '0,5').equal(
-            [])
+        self.env.expect('ioverlaps', 'intervals', '0,5').equal([])
 
     def test_ioverlaps_should_return_the_interval_when_parameter_interval_abuts_upper_bound_and_upper_not_included(self):
         self.env.cmd('FLUSHALL')
         self.env.cmd('iadd', 'intervals', '5,10[', 'i1')
-        self.env.expect('ioverlaps', 'intervals', '10,15').equal(
-            [])
+        self.env.expect('ioverlaps', 'intervals', '10,15').equal([])
+
+    def test_ioverlaps_should_return_an_error_when_interval_is_incorrect(self):
+        self.env.cmd('FLUSHALL')
+        self.env.expect('ioverlaps', 'intervals', '10,').error()

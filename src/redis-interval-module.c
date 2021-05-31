@@ -96,6 +96,10 @@ int iOverlapsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     }
     RedisModuleString *keyName = argv[1];
     RedisModuleKey *key = RedisModule_OpenKey(ctx, keyName, REDISMODULE_READ);
+    Interval *intervalToSearch = parseInterval(argv[2]);
+    if (intervalToSearch == NULL) {
+        return RedisModule_ReplyWithError(ctx, "incorrect interval");
+    }
     int type = RedisModule_KeyType(key);
     if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != IntervalSetType) {
         return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
@@ -105,7 +109,6 @@ int iOverlapsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
             return RedisModule_ReplyWithEmptyArray(ctx);
         } else {
             intervalSet = RedisModule_ModuleTypeGetValue(key);
-            Interval *intervalToSearch = parseInterval(argv[2]);
             searchInterval(ctx, intervalSet, intervalToSearch);
             return REDISMODULE_OK;
         }

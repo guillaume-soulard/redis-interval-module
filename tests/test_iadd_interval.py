@@ -1,5 +1,9 @@
 from RLTest import Env
 
+maxBound = '99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999' \
+           '99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999' \
+           '99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999' \
+           '99999999999999999999999'
 
 class TestIAdd():
 
@@ -13,6 +17,11 @@ class TestIAdd():
     def shouldNoError(self, interval):
         self.env.cmd('FLUSHALL')
         self.env.expect('iadd', 'intervals', interval, 'i1').equal(1)
+
+    def expectInterval(self, interval, expected):
+        self.env.cmd('FLUSHALL')
+        self.env.cmd('iadd', 'intervals', interval, 'i1')
+        self.env.expect('iscan', 'intervals', '0', 'MATCH', 'i1', 'COUNT', '9999').equal([0, [expected]])
 
     def test_iadd_empty_interval_should_return_an_error(self):
         self.shouldError('')
@@ -79,3 +88,27 @@ class TestIAdd():
 
     def test_iadd_with_valid_bounds_4_should_return_1(self):
         self.shouldNoError(']0,1[')
+
+    def test_iadd_with_valid_hightest_min_bound_should_not_return_an_error(self):
+        self.shouldNoError('-' + maxBound + ',1')
+
+    def test_iadd_with_valid_hightest_max_bound_should_not_return_an_error(self):
+        self.shouldNoError('0,' + maxBound)
+
+    def test_iadd_with_valid_hightest_min_bound_and_intinity_should_not_return_an_error(self):
+        self.shouldNoError(maxBound + ',+inf')
+
+    def test_iadd_with_valid_hightest_max_bound_and_infinity_should_not_return_an_error(self):
+        self.shouldNoError('-inf,-' + maxBound)
+
+    def test_iadd_with_greater_number_on_max_bound_should_not_return_an_error(self):
+        self.shouldNoError('-inf,' + maxBound + '9')
+
+    def test_iadd_with_greater_number_on_min_bound_should_not_return_an_error(self):
+        self.shouldNoError('-' + maxBound + '9,+inf')
+
+    def test_iadd_should_return_minus_inf_plus_inf_when_upper_overflow(self):
+        self.expectInterval('-inf,' + maxBound + '9', [b'i1', b'1', b'-inf', b'1', b'+inf'])
+
+    def test_iadd_should_return_minus_inf_plus_inf_when_lower_overflow(self):
+        self.expectInterval('-' + maxBound + '9,+inf', [b'i1', b'1', b'-inf', b'1', b'+inf'])

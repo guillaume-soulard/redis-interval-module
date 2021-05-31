@@ -3,6 +3,7 @@
 #include "string.h"
 #include <float.h>
 #include "util.h"
+#include "math.h"
 
 #define doubleBufferSize 512
 
