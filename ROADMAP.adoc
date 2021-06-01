@@ -5,3 +5,4 @@
 * ICONTAINS and IOVERLAPS add store option
 ** ICONTAINS <key> <valueToSearch> [STORE <destination>]
 ** IOVERLAPS same as previous command
+* Add travis build status in README
