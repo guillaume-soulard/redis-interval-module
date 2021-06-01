@@ -84,7 +84,8 @@ This command query an interval set and return the list of intervals that contain
 
 The value can be a decimal number or infinity (-inf, inf or +inf)
 
-Time complexity : O(log(N)) where N is the number of items in interval set
+Time complexity : O(log(N) + M) where N is the number of items in interval set and M the number of intervals to be return.
+
 Return value : the list of intervals.
 
 .Retrun format
@@ -113,7 +114,7 @@ Return value : the list of intervals.
 
 Return the list of intervals that contains of overlaps the interval parameter.
 
-Time complexity : O(log(N))
+Time complexity : O(log(N) + M) where N is the number of items in interval set and M the number of intervals to be return.
 Return value : the list of intervals with the following format :
 
 .Return format
