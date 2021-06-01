@@ -184,6 +184,38 @@ int iScanCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     }
 }
 
+int iGetCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+    RedisModule_AutoMemory(ctx);
+    if (argc < 3) {
+        return RedisModule_WrongArity(ctx);
+    }
+    RedisModuleString *keyName = argv[1];
+    RedisModuleKey *key = RedisModule_OpenKey(ctx, keyName, REDISMODULE_READ);
+    int type = RedisModule_KeyType(key);
+    if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != IntervalSetType) {
+        return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
+    } else {
+        IntervalSet *intervalSet;
+        if (type == REDISMODULE_KEYTYPE_EMPTY) {
+            RedisModule_ReplyWithEmptyArray(ctx);
+        } else {
+            intervalSet = RedisModule_ModuleTypeGetValue(key);
+            RedisModule_ReplyWithArray(ctx, REDISMODULE_POSTPONED_ARRAY_LEN);
+            long len = 0;
+            for (int i = 2; i < argc; i++) {
+                char *member = RedisModule_StringPtrLen(argv[i], NULL);
+                Item *item =  get(intervalSet->hash, member);
+                if (item != NULL) {
+                    outputInterval(ctx, item->member, item->interval);
+                    len++;
+                }
+            }
+            RedisModule_ReplySetArrayLength(ctx, len);
+        }
+        return REDISMODULE_OK;
+    }
+}
+
 int RedisModule_OnLoad(RedisModuleCtx *ctx) {
     if (RedisModule_Init(ctx, "interval", 1, REDISMODULE_APIVER_1) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
@@ -217,6 +249,9 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx) {
         return REDISMODULE_ERR;
     }
     if (RedisModule_CreateCommand(ctx, "iscan", iScanCommand, "readonly", 1, 1, 1) == REDISMODULE_ERR) {
+        return REDISMODULE_ERR;
+    }
+    if (RedisModule_CreateCommand(ctx, "iget", iGetCommand, "readonly", 1, 1, 1) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
     }
     return REDISMODULE_OK;

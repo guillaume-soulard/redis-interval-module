@@ -1,5 +1,3 @@
-* IGET command to get a specific item :
-** IGET <key> <member> [<member>...]
 * ICONTAINS and IOVERLAPS commands add COUNT argument
 ** ICONTAINS <key> <valueToSearch> [COUNT <amount>]. The count argument tells the command to return only the first `amount` intervals to return. That transform the command complexity from O(log(N) + M) to O(log(M) + O(1)) = O(log(N))
 ** IOVERLAPS : same as previous command
