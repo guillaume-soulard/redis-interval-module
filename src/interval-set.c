@@ -29,17 +29,17 @@ int removeInterval(IntervalSet *intervalSet, char *member) {
     return 0;
 }
 
-void searchValue(RedisModuleCtx *ctx, IntervalSet *intervalSet, double valueToSearch) {
+void searchValue(RedisModuleCtx *ctx, IntervalSet *intervalSet, double valueToSearch, long long count) {
     RedisModule_ReplyWithArray(ctx,REDISMODULE_POSTPONED_ARRAY_LEN);
     int len = 0;
-    findContains(intervalSet->tree, valueToSearch, ctx, &len);
+    findContains(intervalSet->tree, valueToSearch, ctx, &len, count);
     RedisModule_ReplySetArrayLength(ctx, len);
 }
 
-void searchInterval(RedisModuleCtx *ctx, IntervalSet *intervalSet, Interval *intervalToSearch) {
+void searchInterval(RedisModuleCtx *ctx, IntervalSet *intervalSet, Interval *intervalToSearch, long long count) {
     RedisModule_ReplyWithArray(ctx,REDISMODULE_POSTPONED_ARRAY_LEN);
     int len = 0;
-    findOverlaps(intervalSet->tree, intervalToSearch, ctx, &len);
+    findOverlaps(intervalSet->tree, intervalToSearch, ctx, &len, count);
     RedisModule_ReplySetArrayLength(ctx, len);
 }
 

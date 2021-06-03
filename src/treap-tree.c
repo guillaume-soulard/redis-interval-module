@@ -199,22 +199,28 @@ void deleteNode(TreeNode **root, Item *toDelete) {
     }
 }
 
-void findContains(TreeNode *node, double value, struct RedisModuleCtx *ctx, int *len) {
+void findContains(TreeNode *node, double value, struct RedisModuleCtx *ctx, int *len, long long count) {
+    if (*len >= count) {
+        return;
+    }
     if (node != NULL) {
         if (containsValue(node->item->interval, value, 1)) {
             outputInterval(ctx, node->item->member, node->item->interval);
             (*len)++;
         }
         if (node->left != NULL && node->left->minLower <= value && value <= node->left->maxUpper) {
-            findContains(node->left, value, ctx, len);
+            findContains(node->left, value, ctx, len, count);
         }
         if (node->right != NULL && node->right->minLower <= value && value <= node->right->maxUpper) {
-            findContains(node->right, value, ctx, len);
+            findContains(node->right, value, ctx, len, count);
         }
     }
 }
 
-void findOverlaps(TreeNode *node, Interval *intervalToSearch, struct RedisModuleCtx *ctx, int *len) {
+void findOverlaps(TreeNode *node, Interval *intervalToSearch, struct RedisModuleCtx *ctx, int *len, long long count) {
+    if (*len >= count) {
+        return;
+    }
     if (node != NULL) {
         if (overlaps(node->item->interval, intervalToSearch)) {
             outputInterval(ctx, node->item->member, node->item->interval);
@@ -226,7 +232,7 @@ void findOverlaps(TreeNode *node, Interval *intervalToSearch, struct RedisModule
                 (node->left->minLower <= intervalToSearch->upperBound &&
                  intervalToSearch->upperBound <= node->left->maxUpper)
         )) {
-            findOverlaps(node->left, intervalToSearch, ctx, len);
+            findOverlaps(node->left, intervalToSearch, ctx, len, count);
         }
         if (node->right != NULL && (
                 (node->right->minLower <= intervalToSearch->lowerBound &&
@@ -234,7 +240,7 @@ void findOverlaps(TreeNode *node, Interval *intervalToSearch, struct RedisModule
                 (node->right->minLower <= intervalToSearch->upperBound &&
                  intervalToSearch->upperBound <= node->right->maxUpper)
         )) {
-            findOverlaps(node->right, intervalToSearch, ctx, len);
+            findOverlaps(node->right, intervalToSearch, ctx, len, count);
         }
     }
 }

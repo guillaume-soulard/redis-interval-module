@@ -22,7 +22,7 @@ void freeTreeNode(TreeNode *node);
 
 void insertNode(TreeNode **root, Item *member);
 void deleteNode(TreeNode **root, Item *toDelete);
-void findContains(TreeNode *node, double value, struct RedisModuleCtx *ctx, int *len);
-void findOverlaps(TreeNode *node, Interval *intervalToSearch, struct RedisModuleCtx *ctx, int *len);
+void findContains(TreeNode *node, double value, struct RedisModuleCtx *ctx, int *len, long long count);
+void findOverlaps(TreeNode *node, Interval *intervalToSearch, struct RedisModuleCtx *ctx, int *len, long long count);
 
 #endif

@@ -103,13 +103,14 @@ Return value : the number of intervals removed from the interval set.
 (integer) 2
 ----
 
-=== ICONTAINS <key> <value>
+=== ICONTAINS <key> <value> [COUNT <amount>]
 
 This command query an interval set and return the list of intervals that contains the value.
 
 The value can be a decimal number or infinity (-inf, inf or +inf)
 
 Time complexity : O(log(N) + M) where N is the number of items in interval set and M the number of intervals to be return.
+If number of intervals to return is constant or COUNT is specified, complexity is O(log(N))
 
 Return value : the list of intervals.
 
@@ -135,11 +136,13 @@ Return value : the list of intervals.
    5) "15"
 ----
 
-=== IOVERLAPS <key> <interval>
+=== IOVERLAPS <key> <interval> [COUNT <amount>]
 
 Return the list of intervals that contains of overlaps the interval parameter.
 
 Time complexity : O(log(N) + M) where N is the number of items in interval set and M the number of intervals to be return.
+If number of intervals to return is constant or COUNT is specified, complexity is O(log(N))
+
 Return value : the list of intervals with the following format :
 
 .Return format
