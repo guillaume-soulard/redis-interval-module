@@ -1,5 +1,7 @@
 = Redis interval module
 
+image::https://travis-ci.com/ogama/redis-interval-module.svg?branch=master[]
+
 This data structure is similar to regular redis sorted set but store interval instead of number.
 
 == Build & run
