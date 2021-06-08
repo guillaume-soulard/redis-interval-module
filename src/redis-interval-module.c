@@ -4,6 +4,7 @@
 #include <string.h>
 #include "util.h"
 #include "float.h"
+#include "output.h"
 
 static RedisModuleType *IntervalSetType;
 
@@ -66,7 +67,7 @@ int iCardCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
 
 int iContainsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     RedisModule_AutoMemory(ctx);
-    if (argc != 3 && argc != 5) {
+    if (argc < 3) {
         return RedisModule_WrongArity(ctx);
     }
     RedisModuleString *keyName = argv[1];
@@ -76,13 +77,15 @@ int iContainsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
         return RedisModule_ReplyWithError(ctx, "incorrect value");
     }
     long long count = DBL_MAX;
-    if (argc > 3 && strcasecmp(RedisModule_StringPtrLen(argv[3], NULL), "count") == 0 && argv[4] != NULL) {
-        if (RedisModule_StringToLongLong(argv[4], &count) == REDISMODULE_ERR) {
-            return RedisModule_ReplyWithError(ctx, "invalid count");
-        }
-        if (count < 0) {
-            return RedisModule_ReplyWithError(ctx, "invalid count");
-        }
+    if (getLongLongParameter(argv, argc, "count", &count) == REDISMODULE_ERR) {
+        return RedisModule_ReplyWithError(ctx, "invalid count");
+    }
+    if (count < 0) {
+        return RedisModule_ReplyWithError(ctx, "invalid count");
+    }
+    RedisModuleString *destinationKey = NULL;
+    if (getRedisModuleStringParameter(argv, argc, "store", &destinationKey) == REDISMODULE_ERR) {
+        return RedisModule_ReplyWithError(ctx, "invalid store");
     }
     int type = RedisModule_KeyType(key);
     if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != IntervalSetType) {
@@ -93,7 +96,9 @@ int iContainsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
             return RedisModule_ReplyWithEmptyArray(ctx);
         } else {
             intervalSet = RedisModule_ModuleTypeGetValue(key);
-            searchValue(ctx, intervalSet, valueToSearch, count);
+            OutputContext *outputContext = buildOutputContextFor(ctx, destinationKey, IntervalSetType);
+            searchValue(ctx, intervalSet, valueToSearch, count, outputContext);
+            freeOutputContext(outputContext);
             return REDISMODULE_OK;
         }
     }
@@ -101,7 +106,7 @@ int iContainsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
 
 int iOverlapsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     RedisModule_AutoMemory(ctx);
-    if (argc != 3 && argc != 5) {
+    if (argc < 3) {
         return RedisModule_WrongArity(ctx);
     }
     RedisModuleString *keyName = argv[1];
@@ -111,13 +116,15 @@ int iOverlapsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
         return RedisModule_ReplyWithError(ctx, "incorrect interval");
     }
     long long count = DBL_MAX;
-    if (argc > 3 && strcasecmp(RedisModule_StringPtrLen(argv[3], NULL), "count") == 0 && argv[4] != NULL) {
-        if (RedisModule_StringToLongLong(argv[4], &count) == REDISMODULE_ERR) {
-            return RedisModule_ReplyWithError(ctx, "invalid count");
-        }
-        if (count < 0) {
-            return RedisModule_ReplyWithError(ctx, "invalid count");
-        }
+    if (getLongLongParameter(argv, argc, "count", &count) == REDISMODULE_ERR) {
+        return RedisModule_ReplyWithError(ctx, "invalid count");
+    }
+    if (count < 0) {
+        return RedisModule_ReplyWithError(ctx, "invalid count");
+    }
+    RedisModuleString *destinationKey = NULL;
+    if (getRedisModuleStringParameter(argv, argc, "store", &destinationKey) == REDISMODULE_ERR) {
+        return RedisModule_ReplyWithError(ctx, "invalid store");
     }
     int type = RedisModule_KeyType(key);
     if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != IntervalSetType) {
@@ -128,7 +135,9 @@ int iOverlapsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
             return RedisModule_ReplyWithEmptyArray(ctx);
         } else {
             intervalSet = RedisModule_ModuleTypeGetValue(key);
-            searchInterval(ctx, intervalSet, intervalToSearch, count);
+            OutputContext *outputContext = buildOutputContextFor(ctx, destinationKey, IntervalSetType);
+            searchInterval(ctx, intervalSet, intervalToSearch, count, outputContext);
+            freeOutputContext(outputContext);
             return REDISMODULE_OK;
         }
     }
@@ -197,7 +206,9 @@ int iScanCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
             RedisModule_ReplySetArrayLength(ctx, 2);
         } else {
             intervalSet = RedisModule_ModuleTypeGetValue(key);
-            scanIntervalSet(ctx, intervalSet, cursor, match, count);
+            OutputContext *outputContext = buildOutputContextFor(ctx, NULL, IntervalSetType);
+            scanIntervalSet(ctx, intervalSet, cursor, match, count, outputContext);
+            freeOutputContext(outputContext);
         }
         return REDISMODULE_OK;
     }
@@ -219,17 +230,19 @@ int iGetCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
             RedisModule_ReplyWithEmptyArray(ctx);
         } else {
             intervalSet = RedisModule_ModuleTypeGetValue(key);
-            RedisModule_ReplyWithArray(ctx, REDISMODULE_POSTPONED_ARRAY_LEN);
-            long len = 0;
+            OutputContext *outputContext = buildOutputContextFor(ctx, NULL, IntervalSetType);
+            if (outputContext->beforeOutput(outputContext) == REDISMODULE_ERR) {
+                return REDISMODULE_ERR;
+            }
             for (int i = 2; i < argc; i++) {
                 char *member = RedisModule_StringPtrLen(argv[i], NULL);
                 Item *item =  get(intervalSet->hash, member);
                 if (item != NULL) {
-                    outputInterval(ctx, item->member, item->interval);
-                    len++;
+                    outputContext->output(outputContext, item);
                 }
             }
-            RedisModule_ReplySetArrayLength(ctx, len);
+            outputContext->afterOutput(outputContext);
+            freeOutputContext(outputContext);
         }
         return REDISMODULE_OK;
     }

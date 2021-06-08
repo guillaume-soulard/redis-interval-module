@@ -149,3 +149,37 @@ int redisModuleStringToDouble(RedisModuleString *str, double *value) {
     char *strValue = RedisModule_StringPtrLen(str, NULL);
     return stringToDouble(strValue, value);
 }
+
+int getLongLongParameter(RedisModuleString **argv, int argc, const char *parameterName, long long *parameterValue) {
+    RedisModuleString *value = NULL;
+    if (getRedisModuleStringParameter(argv, argc, parameterName, &value) == REDISMODULE_ERR) {
+        return REDISMODULE_ERR;
+    }
+    if (value != NULL) {
+        if (RedisModule_StringToLongLong(argv[4], parameterValue) == REDISMODULE_ERR) {
+            return REDISMODULE_ERR;
+        }
+    }
+    return REDISMODULE_OK;
+}
+
+int getRedisModuleStringParameter(RedisModuleString **argv, int argc, const char *parameterName, RedisModuleString **parameterValue) {
+    int i = 0;
+    int found = 0;
+    while (i < argc) {
+        const char *parameter = RedisModule_StringPtrLen(argv[i], NULL);
+        if (strcasecmp(parameterName, parameter) == 0) {
+            i++;
+            found = 1;
+            break;
+        }
+        i++;
+    }
+    if (found) {
+        if (i >= argc || argv[i] == NULL) {
+            return REDISMODULE_ERR;
+        }
+        *parameterValue = argv[i];
+    }
+    return REDISMODULE_OK;
+}

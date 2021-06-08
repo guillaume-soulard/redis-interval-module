@@ -15,6 +15,5 @@ void freeInterval(Interval *interval);
 Interval *parseInterval(RedisModuleString *intervalString);
 int containsValue(Interval *interval, double value, int includeValue);
 int overlaps(Interval *interval1, Interval *interval2);
-void outputInterval(RedisModuleCtx *ctx, char *member, Interval *interval);
 
 #endif

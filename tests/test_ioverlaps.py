@@ -90,3 +90,46 @@ class TestIOverlaps():
         self.env.cmd('iadd', 'intervals', '10,20', 'i3')
         res = self.env.cmd('ioverlaps', 'intervals', '7,12', 'COUNT', '2')
         self.env.assertEqual(len(res), 2)
+
+
+    def test_ioverlaps_should_store_result_in_an_other_key(self):
+        self.env.cmd('FLUSHALL')
+        self.env.cmd('iadd', 'intervals', '0,1', 'i1')
+        self.env.cmd('iadd', 'intervals', '0,2', 'i2')
+        self.env.cmd('iadd', 'intervals', '0,3', 'i3')
+        self.env.cmd('iadd', 'intervals', '0,4', 'i4')
+        self.env.cmd('ioverlaps', 'intervals', '3,4', 'STORE', 'destination')
+        res = self.env.cmd('icard', 'destination')
+        self.env.assertEqual(res, 2)
+
+    def test_ioverlaps_should_store_result_in_an_other_key_only_1_member(self):
+        self.env.cmd('FLUSHALL')
+        self.env.cmd('iadd', 'intervals', '0,1', 'i1')
+        self.env.cmd('iadd', 'intervals', '0,2', 'i2')
+        self.env.cmd('iadd', 'intervals', '0,3', 'i3')
+        self.env.cmd('iadd', 'intervals', '0,4', 'i4')
+        self.env.cmd('ioverlaps', 'intervals', '3,4', 'COUNT', '1', 'STORE', 'destination')
+        res = self.env.cmd('icard', 'destination')
+        self.env.assertEqual(res, 1)
+
+    def test_ioverlaps_should_return_an_error_if_store_key_is_not_an_interval_set(self):
+        self.env.cmd('FLUSHALL')
+        self.env.cmd('iadd', 'intervals', '0,1', 'i1')
+        self.env.cmd('set', 'foo', 'bar')
+        self.env.expect('ioverlaps', 'intervals', '3,4', 'COUNT', '1', 'STORE', 'foo').error()
+
+    def test_ioverlaps_should_store_result_in_an_other_not_empty_interval_set(self):
+        self.env.cmd('FLUSHALL')
+        self.env.cmd('iadd', 'intervals', '0,1', 'i1')
+        self.env.cmd('iadd', 'destination', '2,3', 'i2')
+        self.env.cmd('ioverlaps', 'intervals', '0,1', 'STORE', 'destination')
+        res = self.env.cmd('icard', 'destination')
+        self.env.assertEqual(res, 2)
+
+    def test_ioverlaps_should_update_key_in_other_interval_set(self):
+        self.env.cmd('FLUSHALL')
+        self.env.cmd('iadd', 'intervals', '0,1', 'i1')
+        self.env.cmd('iadd', 'destination', '2,3', 'i1')
+        self.env.expect('ioverlaps', 'intervals', '0,1', 'STORE', 'destination').equal(1)
+        res = self.env.cmd('iget', 'destination', 'i1')
+        self.env.assertEqual(res, [[b'i1', b'1', b'0', b'1', b'1']])

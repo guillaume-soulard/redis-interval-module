@@ -102,22 +102,3 @@ int overlaps(Interval *interval1, Interval *interval2) {
             containsValue(interval2, interval1->upperBound, interval1->includeUpperBound) ||
             containsValue(interval2, interval1->upperBound, interval1->includeUpperBound);
 }
-
-void outputInfBoundOrValue(RedisModuleCtx *ctx, double value) {
-    if (value == -DBL_MAX) {
-        RedisModule_ReplyWithCString(ctx, "-inf");
-    } else if (value == DBL_MAX) {
-        RedisModule_ReplyWithCString(ctx, "+inf");
-    } else {
-        RedisModule_ReplyWithDouble(ctx, value);
-    }
-}
-
-void outputInterval(RedisModuleCtx *ctx, char *member, Interval *interval) {
-    RedisModule_ReplyWithArray(ctx,5);
-    RedisModule_ReplyWithCString(ctx, member);
-    RedisModule_ReplyWithDouble(ctx, interval->includeLowerBound);
-    outputInfBoundOrValue(ctx, interval->lowerBound);
-    RedisModule_ReplyWithDouble(ctx, interval->includeUpperBound);
-    outputInfBoundOrValue(ctx, interval->upperBound);
-}

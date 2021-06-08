@@ -22,4 +22,6 @@ add_library(
         src/linked-list.c
         src/item.h
         src/item.c
+        src/output.h
+        src/output.c
 )

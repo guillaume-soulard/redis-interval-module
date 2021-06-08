@@ -1,10 +1,11 @@
-#ifndef INTERVAL_RED_BLACK_TREE_H
-#define INTERVAL_RED_BLACK_TREE_H
+#ifndef TREE_H
+#define TREE_H
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "interval.h"
 #include "item.h"
+#include "output.h"
 
 typedef struct TreeNode {
     double val;
@@ -22,7 +23,7 @@ void freeTreeNode(TreeNode *node);
 
 void insertNode(TreeNode **root, Item *member);
 void deleteNode(TreeNode **root, Item *toDelete);
-void findContains(TreeNode *node, double value, struct RedisModuleCtx *ctx, int *len, long long count);
-void findOverlaps(TreeNode *node, Interval *intervalToSearch, struct RedisModuleCtx *ctx, int *len, long long count);
+void findContains(TreeNode *node, double value, struct RedisModuleCtx *ctx, int *len, long long count, OutputContext *outputContext);
+void findOverlaps(TreeNode *node, Interval *intervalToSearch, struct RedisModuleCtx *ctx, int *len, long long count, OutputContext *outputContext);
 
 #endif

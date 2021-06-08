@@ -2,6 +2,7 @@
 #include "string.h"
 #include "treap-tree.h"
 #include "linked-list.h"
+#include "output.h"
 
 IntervalSet *createIntervalSet() {
     IntervalSet *intervalSet = RedisModule_Alloc(sizeof(IntervalSet));
@@ -29,29 +30,36 @@ int removeInterval(IntervalSet *intervalSet, char *member) {
     return 0;
 }
 
-void searchValue(RedisModuleCtx *ctx, IntervalSet *intervalSet, double valueToSearch, long long count) {
-    RedisModule_ReplyWithArray(ctx,REDISMODULE_POSTPONED_ARRAY_LEN);
+void searchValue(RedisModuleCtx *ctx, IntervalSet *intervalSet, double valueToSearch, long long count, OutputContext *outputContext) {
+    if (outputContext->beforeOutput(outputContext) == REDISMODULE_ERR) {
+        return;
+    }
     int len = 0;
-    findContains(intervalSet->tree, valueToSearch, ctx, &len, count);
-    RedisModule_ReplySetArrayLength(ctx, len);
+    findContains(intervalSet->tree, valueToSearch, ctx, &len, count, outputContext);
+    outputContext->afterOutput(outputContext);
 }
 
-void searchInterval(RedisModuleCtx *ctx, IntervalSet *intervalSet, Interval *intervalToSearch, long long count) {
-    RedisModule_ReplyWithArray(ctx,REDISMODULE_POSTPONED_ARRAY_LEN);
+void searchInterval(RedisModuleCtx *ctx, IntervalSet *intervalSet, Interval *intervalToSearch, long long count, OutputContext *outputContext) {
+    if (outputContext->beforeOutput(outputContext) == REDISMODULE_ERR) {
+        return;
+    }
     int len = 0;
-    findOverlaps(intervalSet->tree, intervalToSearch, ctx, &len, count);
-    RedisModule_ReplySetArrayLength(ctx, len);
+    findOverlaps(intervalSet->tree, intervalToSearch, ctx, &len, count, outputContext);
+    outputContext->afterOutput(outputContext);
 }
 
-void scanIntervalSet(RedisModuleCtx *ctx, IntervalSet *intervalSet, long long cursor, const char *match, long long count) {
+void scanIntervalSet(RedisModuleCtx *ctx, IntervalSet *intervalSet, long long cursor, const char *match, long long count, OutputContext *outputContext) {
     char *matchPattern = strdup(match);
     LinkedList *list = scanHash(intervalSet->hash, &cursor, matchPattern, count);
     RedisModule_ReplyWithArray(ctx, 2);
     RedisModule_ReplyWithLongLong(ctx, cursor);
-    RedisModule_ReplyWithArray(ctx, list->len);
+    if (outputContext->beforeOutput(outputContext) == REDISMODULE_ERR) {
+        return;
+    }
     LinkedListNode *listNode = list->head;
     while (listNode != NULL) {
-        outputInterval(ctx, listNode->item->member, listNode->item->interval);
+        outputContext->output(outputContext, listNode->item);
         listNode = listNode->next;
     }
+    outputContext->afterOutput(outputContext);
 }
