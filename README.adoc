@@ -45,7 +45,7 @@ interval ::= ("[" | "]") (double | "-inf") "," (double | "+inf" | "inf") ("[" | 
 
 Add an interval with an associated item in the interval set.
 
-Time complexity : O(Log(n))
+Time complexity : `O(Log(N))`
 Return value : the number of intervals added in interval set
 
 .Example
@@ -58,7 +58,7 @@ Return value : the number of intervals added in interval set
 
 Get a specific interval by the member in the interval set. Only existing intervals are returned.
 
-Time complexity : O(N) where N is the number of members requested. If N is constant it's O(1)
+Time complexity : `O(N)` where N is the number of members requested. If N is constant it's `O(1)`
 Return value : the number of intervals added in interval set
 
 .Example
@@ -83,7 +83,7 @@ Return value : the number of intervals added in interval set
 
 Return the number of intervals in the interval set.
 
-Time complexity : O(1)
+Time complexity : `O(1)`
 Return value : the number of intervals in the given interval set
 
 .Example
@@ -96,7 +96,7 @@ Return value : the number of intervals in the given interval set
 
 Remove the interval by the item.
 
-Time complexity : O(log(n))
+Time complexity : `O(log(n))`
 Return value : the number of intervals removed from the interval set.
 
 .Example
@@ -105,14 +105,16 @@ Return value : the number of intervals removed from the interval set.
 (integer) 2
 ----
 
-=== ICONTAINS <key> <value> [COUNT <amount>]
+=== ICONTAINS <key> <value> [COUNT <amount>] [STORE <destinationKey>]
 
 This command query an interval set and return the list of intervals that contains the value.
 
 The value can be a decimal number or infinity (-inf, inf or +inf)
 
-Time complexity : O(log(N) + M) where N is the number of items in interval set and M the number of intervals to be return.
-If number of intervals to return is constant or COUNT is specified, complexity is O(log(N))
+Time complexity : `O(log(N) + M)` where N is the number of items in interval set and M the number of intervals to be return.
+If number of intervals to return is constant or COUNT is specified, complexity is `O(log(N))`.
+
+If store option is specified complexity is `O(log(N)) + O(M*log(M))` where N is the number of members is the source key, and M the number of key to store in the destination key.
 
 Return value : the list of intervals.
 
@@ -138,12 +140,14 @@ Return value : the list of intervals.
    5) "15"
 ----
 
-=== IOVERLAPS <key> <interval> [COUNT <amount>]
+=== IOVERLAPS <key> <interval> [COUNT <amount>] [STORE <destinationKey>]
 
 Return the list of intervals that contains of overlaps the interval parameter.
 
-Time complexity : O(log(N) + M) where N is the number of items in interval set and M the number of intervals to be return.
-If number of intervals to return is constant or COUNT is specified, complexity is O(log(N))
+Time complexity : `O(log(N) + M)` where N is the number of items in interval set and M the number of intervals to be return.
+If number of intervals to return is constant or COUNT is specified, complexity is `O(log(N))`
+
+If store option is specified complexity is `O(log(N)) + O(M*log(M))` where N is the number of members is the source key, and M the number of key to store in the destination key.
 
 Return value : the list of intervals with the following format :
 
@@ -178,7 +182,7 @@ Return value : the list of intervals with the following format :
 
 This command work like regular redis `SCAN`, `SSCAN`, `ZSCAN` and `HSCAN` commands.
 
-Time complexity : O(N) Where N is the number of intervals to read specified by the `COUNT` clause (10 if the `COUNT` clause is specified).
+Time complexity : `O(N)` Where N is the number of intervals to read specified by the `COUNT` clause (10 if the `COUNT` clause is specified).
 Return format : the same format as the `SCAN` command, but every items is an interval.
 
 .Item format
