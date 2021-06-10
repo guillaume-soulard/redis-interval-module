@@ -41,7 +41,7 @@ interval ::= ("[" | "]") (double | "-inf") "," (double | "+inf" | "inf") ("[" | 
 ]-inf,inf[ // from -infinity to infinity
 ----
 
-=== IADD <key> [<interval> <item> ...]
+=== IADD <key> [<interval> <member> ...]
 
 Add an interval with an associated item in the interval set.
 
@@ -92,7 +92,7 @@ Return value : the number of intervals in the given interval set
 (integer) 2
 ----
 
-=== IREM <key> [<item> ...]
+=== IREM <key> <member> [<member> ...]
 
 Remove the interval by the item.
 
