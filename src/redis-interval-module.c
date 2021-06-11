@@ -5,6 +5,7 @@
 #include "util.h"
 #include "float.h"
 #include "output.h"
+#include "limits.h"
 
 static RedisModuleType *IntervalSetType;
 
@@ -76,7 +77,7 @@ int iContainsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     if (!redisModuleStringToDouble(argv[2], &valueToSearch)) {
         return RedisModule_ReplyWithError(ctx, "incorrect value");
     }
-    long long count = DBL_MAX;
+    long long count = LLONG_MAX;
     if (getLongLongParameter(argv, argc, "count", &count) == REDISMODULE_ERR) {
         return RedisModule_ReplyWithError(ctx, "invalid count");
     }
@@ -115,7 +116,7 @@ int iOverlapsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     if (intervalToSearch == NULL) {
         return RedisModule_ReplyWithError(ctx, "incorrect interval");
     }
-    long long count = DBL_MAX;
+    long long count = LLONG_MAX;
     if (getLongLongParameter(argv, argc, "count", &count) == REDISMODULE_ERR) {
         return RedisModule_ReplyWithError(ctx, "invalid count");
     }
@@ -235,7 +236,7 @@ int iGetCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
                 return REDISMODULE_ERR;
             }
             for (int i = 2; i < argc; i++) {
-                char *member = RedisModule_StringPtrLen(argv[i], NULL);
+                const char *member = RedisModule_StringPtrLen(argv[i], NULL);
                 Item *item =  get(intervalSet->hash, member);
                 if (item != NULL) {
                     outputContext->output(outputContext, item);

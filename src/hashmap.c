@@ -10,7 +10,7 @@
 #define hashMapResizeCapacity 100
 #define maxItemsToLookup 100000
 
-size_t getHashCode(size_t hashCapacity, char *key) {
+size_t getHashCode(size_t hashCapacity, const char *key) {
     unsigned int hash = 0;
     for (int i = 0; i < strlen(key); i++) {
         hash = 31 * hash + key[i];
@@ -127,7 +127,7 @@ Item *put(HashMap *hashMap, char *key, Interval *interval) {
     return insertedNode;
 }
 
-Item *getOnArray(HashMapArray *array, char *key, size_t *index) {
+Item *getOnArray(HashMapArray *array, const char *key, size_t *index) {
     if (array != NULL) {
         size_t hashIndex = getHashCode(array->capacity, key);
         if (index != NULL) {
@@ -143,7 +143,7 @@ Item *getOnArray(HashMapArray *array, char *key, size_t *index) {
     return NULL;
 }
 
-Item *get(HashMap *hashMap, char *key) {
+Item *get(HashMap *hashMap, const char *key) {
     incrementalRehash(hashMap);
     if (hashMap->arraysLen > 1) {
         Item *foundNode;

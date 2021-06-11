@@ -22,7 +22,7 @@ typedef struct HashMap {
 HashMap *createHashMap();
 void freeHashMap(HashMap *hashMap);
 Item *put(HashMap *hashMap, char *key, Interval *interval);
-Item *get(HashMap *hashMap, char *key);
+Item *get(HashMap *hashMap, const char *key);
 void delete(HashMap *hashMap, char *key);
 LinkedList *scanHash(HashMap *hashMap, long long int *cursor, const char *match, long long int count);
 #endif
